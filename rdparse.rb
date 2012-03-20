@@ -223,6 +223,16 @@ class Parser
 
 end
 
+class FlipFlop
+  def initialize
+    @ffParser = Parser.new("flip flop") do
+      rule :boolean do
+        match(:boolean
+            end
+    end
+  end
+end
+
 # ##############################################################################
 # #
 # # This part defines the dice language
