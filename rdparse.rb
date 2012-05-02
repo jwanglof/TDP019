@@ -3,7 +3,6 @@
 # 2010-02-11 New version of this file for the 2010 instance of TDP007
 #   which handles false return values during parsing, and has an easy way
 #   of turning on and off debug messages.
-
 require 'logger'
 
 class Rule
@@ -124,6 +123,7 @@ class Parser
 
   def initialize(language_name, &block)
     @logger = Logger.new(STDOUT)
+    @logger.level = Logger::WARn
     @lex_tokens = []
     @rules = {}
     @start = nil
@@ -221,16 +221,6 @@ class Parser
     @current_rule.send(:match, *pattern, &block)
   end
 
-end
-
-class FlipFlop
-  def initialize
-    @ffParser = Parser.new("flip flop") do
-      rule :boolean do
-        match(:boolean
-            end
-    end
-  end
 end
 
 # ##############################################################################
