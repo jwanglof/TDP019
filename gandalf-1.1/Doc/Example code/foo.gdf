@@ -1,0 +1,4 @@
+gandalf_is_late = false
+
+if (gandalf_is_late == true)
+	print "A wizard is never late, Frodo Baggins."

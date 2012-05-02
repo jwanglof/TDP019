@@ -1,0 +1,11 @@
+fibonacci:n
+	if(n == 0)
+		return 0
+	elseif(n == 1)
+		return 1
+	else
+		a = [self, fibonacci:n-1]
+		b = [self, fibonacci:n-2]
+		return a + b
+
+[self, fibonacci:15]
