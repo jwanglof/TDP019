@@ -1,1 +1,4 @@
-asdHej
+To run:
+	Start IRB
+	load 'run.rb'
+	Test the language
