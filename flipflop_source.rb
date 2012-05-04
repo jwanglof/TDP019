@@ -23,10 +23,75 @@ class FlipFlop
       
       token(/./) { |m| m }
 
+      ## STATEMENT
       start :statement_list do
         match(:statement_list, :statement)
         match(:statement)
       end
+      
+      rule :statement do
+        match(:print_statement)
+        match(:assign_statement)
+        match(:function_declare)
+        match(:expression)
+        match(:return_statement)
+        # match(:if_statement)
+        # match(:loop_statement)
+        # match(:read_statement)
+      end
+      
+      rule :print_statement do
+        match(:identifier, 'scream') { |a, b| Print_Node.new(a) }
+        match(:atom, 'scream') { |a, b| Print_Node.new(a) }
+      end
+
+      rule :assign_statement do
+        match(:expression, '=', :identifier) { |a, b, c| AssignValue_Node.new(c, a) }
+      end
+
+      # Does not work!
+      rule :function_declare do
+        match('boj', :statement_list, 'job', :identifier, '(', :parameter_list, ')') {
+          |_, statement_list, _, identifier, _, parameter_list, _|
+          FunctionDec_Node.new(statement_list, identifier, parameter_list)
+        }
+      end
+
+
+      ## FUNCTION_DECLARE
+      rule :parameter do
+        match(:atom)
+      end
+      
+      rule :parameter_list do
+        match(:parameter_list, :parameter)
+        match(:parameter)
+      end
+      ## FUNCTION_DECLARE
+
+
+      rule :return_statement do
+        match(:expression, "spit") { |a, b| Return_Node.new(a) }
+      end
+
+      # rule :if_statement do
+        
+      # end
+
+      # rule :loop_statement do
+      #   match("pool", :statement_list, "loop", "(", :assign_statement, :expression_pred, :statement, ")") { |no_use, statement_list, no_use2, no_use3, assign_statement, expression_pred, statement, no_use4| Loop_Node.new(statement_list, expression_pred, assign_statement, statement) }
+      #   match("pool", :statement_list, "loop", "(", :expression_pred, ")") { }        
+      # end
+
+      # rule :read_statement do
+
+      # end
+
+      # rule :op_assignment do
+      #   match('=')
+      # end
+      ## STATEMENT
+
 
       ## EXPRESSIONS
       rule :expression do
@@ -36,30 +101,25 @@ class FlipFlop
         match(:atom)
       end
 
-      rule :atom do
-        match(:identifier)
-        match(:integer_expr)
-        match(:float_expr)
-        match(:string_expr)
-        match(:boolean_expr)
-      end
-
-      rule :boolean_expr do
-        match("yes") { |a| Boolean_Node.new(a) }
-        match("no") { |a| Boolean_Node.new(a) }
+      rule :expression_pred do
+        match(:atom, :op_relational, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
+        match(:atom, :op_logic, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
       end
 
       rule :expression_arithmetic do
         match(:atom, :op_arithmetic, :expression) { |a, b, c| ArithmeticExpr_Node.new(b, a, c) }
       end
 
-      rule :expression_pred do
-        match(:atom, :op_relational, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
-        match(:atom, :op_logic, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
+      rule :function_call do
+        # match(:identifier, "(", :arg_list, ")")
       end
 
-      rule :function_call do
-        
+      rule :atom do
+        match(:identifier)
+        match(:integer_expr)
+        match(:float_expr)
+        match(:string_expr)
+        match(:boolean_expr)
       end
 
       rule :identifier do
@@ -75,9 +135,13 @@ class FlipFlop
       end
 
       rule :string_expr do
-        # match(String) { |a| String_Node.new(a) }
         match(/'[^\']*'/) { |a| String_Node.new(a) }
         match(/"[^\"]*"/) { |a| String_Node.new(a) }
+      end
+
+      rule :boolean_expr do
+        match("yes") { |a| Boolean_Node.new(a) }
+        match("no") { |a| Boolean_Node.new(a) }
       end
       ## EXPRESSIONS
 
@@ -91,8 +155,6 @@ class FlipFlop
         match("%")
       end
       ## OPERATOR ARITHMETIC
-
-
       ## OPERATOR RELATIONAL
       rule :op_relational do
         match('<')
@@ -103,8 +165,6 @@ class FlipFlop
         match('!=')
       end
       ## OPERATOR RELATIONAL
-
-
       ## OPERATOR LOGIC
       rule :op_logic do
         match('!')
@@ -112,65 +172,6 @@ class FlipFlop
         match('|')
       end
       ## OPERATOR LOGIC
-
-      ## STATEMENT
-      rule :statement do
-        match(:print_statement)
-        match(:assign_statement)
-        match(:expression)
-        match(:function_declare)
-        # match(:if_statement)
-        # match(:loop_statement)
-        # match(:read_statement)
-        # match(:return_statement)
-      end
-      
-      rule :assign_statement do
-        match(:expression, '=', :identifier) { |a, b, c| AssignValue_Node.new(c, a) }
-      end
-
-      rule :function_declare do
-        match('boj', :statement_list, 'job', :identifier, '(', :parameter_list, ')') {
-          |_, statement_list, _, identifier, _, parameter_list, _|
-          FunctionDec_Node.new(statement_list, identifier, parameter_list)
-        }
-      end
-
-      rule :parameter do
-        match(:atom)
-      end
-      
-      rule :parameter_list do
-        match(:parameter_list, :parameter)
-        match(:parameter)
-      end
-
-      # rule :if_statement do
-        
-      # end
-
-      # rule :loop_statement do
-      #   match("pool", :statement_list, "loop", "(", :assign_statement, :expression_pred, :statement, ")") { |no_use, statement_list, no_use2, no_use3, assign_statement, expression_pred, statement, no_use4| Loop_Node.new(statement_list, expression_pred, assign_statement, statement) }
-      #   match("pool", :statement_list, "loop", "(", :expression_pred, ")") { }        
-      # end
-
-      rule :print_statement do
-        match(:identifier, 'scream') { |a, b| Print_Node.new(a) }
-        match(:string_expr, 'scream') { |a, b| Print_Node.new(a) }
-      end
-
-      # rule :read_statement do
-
-      # end
-    
-      # rule :return_statement do
-      #   match(:expression, "spit") { |a, b| Return_Node.new(a) }
-      # end
-
-      # rule :op_assignment do
-      #   match('=')
-      # end
-      ## STATEMENT
     end
   end
   

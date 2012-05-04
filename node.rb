@@ -200,12 +200,16 @@ class FunctionDec_Node
     @statement_list = _statement_list
     @identifier = _identifier
     @parameter_list = _parameter_list
+
+    if not @@functionHash.include? (identifier.value)
+      @@functionHash[identifier.value] = self
+    else
+      puts "A function that's called #{identifier.value} already exists."
+    end
   end
 
   def evaluate()
     puts "-----> Entered FunctionDec_Node"
-
-    puts identifier.value
 #    if not @@functionHash.include? (identifier.value)
   end
 end
