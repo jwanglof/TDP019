@@ -1,9 +1,14 @@
 #!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
 
 @@variableHash = {}
 
 def hashLookup(var_name, hash_name)
   hash_name[var_name]
+end
+
+def hashChange(var_name, hash_name, new_value)
+  hash_name[var_name] = new_value
 end
 
 class If_Stmt
@@ -58,6 +63,8 @@ class Print_Node
 end
 
 class Variable_Node
+  attr_accessor :value
+
   def initialize(_value)
     @value = _value
   end
@@ -77,7 +84,8 @@ class Return_Node
   end
 end
 
-class Op_Arithmetic_Node
+# class Op_Arithmetic_Node
+class ArithmeticExpr_Node
   def initialize(_operator, _operand1, _operand2)
     @operator = _operator
     @operand1 = _operand1
@@ -100,7 +108,8 @@ class Op_Arithmetic_Node
   end
 end
 
-class Op_Relational_Node
+# class Op_Relational_Node
+class PredicatExpr_Node
   def initialize(_operator, _value1, _value2)
     @operator = _operator
     @value1 = _value1
@@ -135,5 +144,34 @@ class Loop_Node
 
   def evaluate()
     
+  end
+end
+
+# Fixa så det står no och yes ist för true och false
+class Boolean_Node
+  def initialize(_value)
+    @value = _value
+  end
+
+  def evaluate()
+    case @value
+    when 'yes'
+      return true
+    when 'no'
+      return false
+    end
+  end
+end
+
+class AssignValue_Node
+  attr_accessor :var_name, :var_value
+
+  def initialize(_var_name, _var_value)
+    @var_name = _var_name
+    @var_value = _var_value
+  end
+
+  def evaluate()
+    @@variableHash[@var_name.value] = @var_value.evaluate()
   end
 end

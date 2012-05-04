@@ -17,9 +17,12 @@ class FlipFlop
       token(/(\+|\-|\*|\/|\%|\=|\!|\&|\<)/) { |m| m } # Operators etc.
       token(/'[^\']*'/) { |m| m } # String with '
       token(/"[^\"]*"/) { |m| m } # String with "
+      token(/\A[^\'\"][a-zA-Z0-9_]+[a-zA-Z0-9_]*/) { |m| m } # Variables
 
       token(/scream/) { |m| m }
       token(/spit/) { |m| m }
+
+      token(/yes|no/) { |m| m }
       
       token(/./) { |m| m }
 
@@ -32,34 +35,38 @@ class FlipFlop
       rule :expression do
         match(:boolean_expr)
         match(:expression_arithmetic)
-        match(:expression_pred)
-        match(:function_call)
-        match(:identifier_expr)
-        match(:integer_expr)
-        match(:float_expr)
+        match(:atom)
+        # match(:expression_pred)
         match(:string_expr)
       end
 
+      rule :atom do
+        match(:function_call)
+        match(:identifier)
+        match(:integer_expr)
+        match(:float_expr)
+      end
 
       rule :boolean_expr do
-
+        match("yes") { |a| Boolean_Node.new(a) }
+        match("no") { |a| Boolean_Node.new(a) }
       end
 
       rule :expression_arithmetic do
-
+        match(:atom, :op_arithmetic, :expression) { |a, b, c| ArithmeticExpr_Node.new(b, a, c) }
       end
 
-      rule :expression_pred do
-        match(:expression, :op_relational, :expression) {}
-        # match(:expression, :op_logic, :expression) {}
-      end
+      # rule :expression_pred do
+      #   match(:expression, :op_relational, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
+      #   match(:expression, :op_logic, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
+      # end
 
       rule :function_call do
 
       end
 
-      rule :identifier_expr do
-        match(/[a-z_]+[a-zA-Z0-9_]*/) { |a| Variable_Node.new(a) }
+      rule :identifier do
+        match(/\A[^\'\"][a-z_]+[a-zA-Z0-9_]*/) { |a| Variable_Node.new(a) }
       end
 
       rule :integer_expr do
@@ -71,91 +78,101 @@ class FlipFlop
       end
 
       rule :string_expr do
-        match(String) { |a| String_Node.new(a) }
+        # match(String) { |a| String_Node.new(a) }
+        match(/'[^\']*'/) { |a| String_Node.new(a) }
+        match(/"[^\"]*"/) { |a| String_Node.new(a) }
       end
       ## EXPRESSIONS
 
 
       ## OPERATOR ARITHMETIC
       rule :op_arithmetic do
-        match(:arithmetic_expressions)
-      end
-
-      rule :arithmetic_expressions do
-        match(:expression, "+", :expression) { |a, b, c| Op_Arithmetic_Node.new(b, a, c) }
-        match(:expression, "-", :expression) { |a, b, c| Op_Arithmetic_Node.new(b, a, c) }
-        match(:expression, "*", :expression) { |a, b, c| Op_Arithmetic_Node.new(b, a, c) }
-        match(:expression, "/", :expression) { |a, b, c| Op_Arithmetic_Node.new(b, a, c) }
-        match(:expression, "%", :expression) { |a, b, c| Op_Arithmetic_Node.new(b, a, c) }
+        match("+")
+        match("-")
+        match("*")
+        match("/")
+        match("%")
       end
       ## OPERATOR ARITHMETIC
 
 
       ## OPERATOR RELATIONAL
       rule :op_relational do
-        match(:expression, '<', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
-        match(:expression, '<=', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
-        match(:expression, '>', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
-        match(:expression, '>=', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
-        match(:expression, '==', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
-        match(:expression, '!=', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
+        # match(:expression, '<', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
+        # match(:expression, '<=', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
+        # match(:expression, '>', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
+        # match(:expression, '>=', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
+        # match(:expression, '==', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
+        # match(:expression, '!=', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
+        match('<')
+        match('<=')
+        match('>')
+        match('>=')
+        match('==')
+        match('!=')
       end
       ## OPERATOR RELATIONAL
 
 
+      ## OPERATOR LOGIC
+      rule :op_logic do
+        match('!')
+        match('&')
+        match('|')
+        match('=')
+      end
+      ## OPERATOR LOGIC
+
       ## STATEMENT
       rule :statement do
-        match(:assign_statement)
-        match(:function_call)
-        match(:function_declare)
-        match(:if_statement)
-        match(:loop_statement)
         match(:print_statement)
-        match(:read_statement)
-        match(:return_statement)
-
-        # Borde flytta? Var då? Går inte ihop i grammatiken... -.-
-        match(:op_arithmetic)
+        match(:assign_statement)
+        match(:expression)
+        # match(:function_call)
+        # match(:function_declare)
+        # match(:if_statement)
+        # match(:loop_statement)
+        # match(:read_statement)
+        # match(:return_statement)
       end
       
       rule :assign_statement do
-        match(:expression, :op_assignment, :identifier_expr)
+        match(:expression, '=', :identifier) { |a, b, c| AssignValue_Node.new(c, a) }
       end
 
-      rule :function_call do
-        match("pool", :statement_list, "loop", "(", :assign_statement, :expression_pred, :statement, ")") { |no_use, statement_list, no_use2, no_use3, assign_statement, expression_pred, statement, no_use4| Loop_Node.new(statement_list, expression_pred, assign_statement, statement)
-        match("pool", :statement_list, "loop", "(", :expression_pred, ")")
-      end
+      # rule :function_call do
 
-      rule :function_declare do
+      # end
+
+      # rule :function_declare do
         
-      end
+      # end
 
-      rule :if_statement do
+      # rule :if_statement do
         
-      end
+      # end
 
-      rule :loop_statement do
-        
-      end
+      # rule :loop_statement do
+      #   match("pool", :statement_list, "loop", "(", :assign_statement, :expression_pred, :statement, ")") { |no_use, statement_list, no_use2, no_use3, assign_statement, expression_pred, statement, no_use4| Loop_Node.new(statement_list, expression_pred, assign_statement, statement) }
+      #   match("pool", :statement_list, "loop", "(", :expression_pred, ")") { }        
+      # end
 
       rule :print_statement do
+        match(:identifier, "scream") { |a, b| Print_Node.new(a) }
         match(:string_expr, "scream") { |a, b| Print_Node.new(a) }
       end
 
-      rule :read_statement do
+      # rule :read_statement do
 
-      end
+      # end
     
-      rule :return_statement do
-        match(:expression, "spit") { |a, b| Return_Node.new(a) }
-      end
+      # rule :return_statement do
+      #   match(:expression, "spit") { |a, b| Return_Node.new(a) }
+      # end
 
-      ## Flytta?
-      rule :op_assignment do
-        match(:op_arithmetic, "=")
-        match("=") { |a| a }
-      end
+      # rule :op_assignment do
+      #   match('=')
+      # end
       ## STATEMENT
     end
   end
