@@ -14,15 +14,12 @@ class FlipFlop
       token(/-(\d+[.]\d+)/) {|m| m.to_f } #<-- negativa floattal matchas
       token(/\d+[.]\d+/) {|m| m.to_f } #<-- positiva floattal matchas
       token(/\d+/) { |m| m.to_i } # Single digit
-      token(/(\+|\-|\*|\/|\%|\=|\!|\&|\<)/) { |m| m } # Operators etc.
+      token(/(\+|\-|\*|\/|\%|\=|\!|\&|\<|\>|\<=|\>=|\==|\!=|\(|\))/) { |m| m } # Operators etc.
       token(/'[^\']*'/) { |m| m } # String with '
       token(/"[^\"]*"/) { |m| m } # String with "
       token(/\A[^\'\"][a-zA-Z0-9_]+[a-zA-Z0-9_]*/) { |m| m } # Variables
-
-      token(/scream/) { |m| m }
-      token(/spit/) { |m| m }
-
-      token(/yes|no/) { |m| m }
+      
+      token(/scream|boj|job|spit|yes|no/) { |m| m }
       
       token(/./) { |m| m }
 
@@ -33,18 +30,18 @@ class FlipFlop
 
       ## EXPRESSIONS
       rule :expression do
-        match(:boolean_expr)
+        match(:expression_pred)
         match(:expression_arithmetic)
+        match(:function_call)
         match(:atom)
-        # match(:expression_pred)
-        match(:string_expr)
       end
 
       rule :atom do
-        match(:function_call)
         match(:identifier)
         match(:integer_expr)
         match(:float_expr)
+        match(:string_expr)
+        match(:boolean_expr)
       end
 
       rule :boolean_expr do
@@ -56,13 +53,13 @@ class FlipFlop
         match(:atom, :op_arithmetic, :expression) { |a, b, c| ArithmeticExpr_Node.new(b, a, c) }
       end
 
-      # rule :expression_pred do
-      #   match(:expression, :op_relational, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
-      #   match(:expression, :op_logic, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
-      # end
+      rule :expression_pred do
+        match(:atom, :op_relational, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
+        match(:atom, :op_logic, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
+      end
 
       rule :function_call do
-
+        
       end
 
       rule :identifier do
@@ -98,12 +95,6 @@ class FlipFlop
 
       ## OPERATOR RELATIONAL
       rule :op_relational do
-        # match(:expression, '<', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
-        # match(:expression, '<=', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
-        # match(:expression, '>', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
-        # match(:expression, '>=', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
-        # match(:expression, '==', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
-        # match(:expression, '!=', :expression) { |a, b, c| Op_Relational_Node.new(b, a, c) }
         match('<')
         match('<=')
         match('>')
@@ -119,7 +110,6 @@ class FlipFlop
         match('!')
         match('&')
         match('|')
-        match('=')
       end
       ## OPERATOR LOGIC
 
@@ -128,8 +118,7 @@ class FlipFlop
         match(:print_statement)
         match(:assign_statement)
         match(:expression)
-        # match(:function_call)
-        # match(:function_declare)
+        match(:function_declare)
         # match(:if_statement)
         # match(:loop_statement)
         # match(:read_statement)
@@ -140,13 +129,21 @@ class FlipFlop
         match(:expression, '=', :identifier) { |a, b, c| AssignValue_Node.new(c, a) }
       end
 
-      # rule :function_call do
+      rule :function_declare do
+        match('boj', :statement_list, 'job', :identifier, '(', :parameter_list, ')') {
+          |_, statement_list, _, identifier, _, parameter_list, _|
+          FunctionDec_Node.new(statement_list, identifier, parameter_list)
+        }
+      end
 
-      # end
-
-      # rule :function_declare do
-        
-      # end
+      rule :parameter do
+        match(:atom)
+      end
+      
+      rule :parameter_list do
+        match(:parameter_list, :parameter)
+        match(:parameter)
+      end
 
       # rule :if_statement do
         
@@ -158,8 +155,8 @@ class FlipFlop
       # end
 
       rule :print_statement do
-        match(:identifier, "scream") { |a, b| Print_Node.new(a) }
-        match(:string_expr, "scream") { |a, b| Print_Node.new(a) }
+        match(:identifier, 'scream') { |a, b| Print_Node.new(a) }
+        match(:string_expr, 'scream') { |a, b| Print_Node.new(a) }
       end
 
       # rule :read_statement do

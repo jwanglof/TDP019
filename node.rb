@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 @@variableHash = {}
+@@functionHash = {}
 
 def hashLookup(var_name, hash_name)
   hash_name[var_name]
@@ -18,7 +19,7 @@ class If_Stmt
   end
 
   def evaluate()
-    
+    puts "-----> Entered If_Node"
   end
 end
 
@@ -28,6 +29,7 @@ class Float_Node
   end
 
   def evaluate()
+    puts "-----> Entered Float_Node"
     return @value
   end
 end
@@ -38,6 +40,7 @@ class Integer_Node
   end
 
   def evaluate()
+    puts "-----> Entered Integer_Node"
     return @value
   end
 end
@@ -48,6 +51,7 @@ class String_Node
   end
   
   def evaluate()
+    puts "-----> Entered String_Node"
     return @value
   end
 end
@@ -58,6 +62,7 @@ class Print_Node
   end
 
   def evaluate()
+    puts "-----> Entered Print_Node"
     puts @value.evaluate()
   end
 end
@@ -70,6 +75,7 @@ class Variable_Node
   end
 
   def evaluate()
+    puts "-----> Entered Variable_Node"
     return hashLookup(@value, @@variableHash)
   end
 end
@@ -80,6 +86,7 @@ class Return_Node
   end
 
   def evaluate()
+    puts "-----> Entered Return_Node"
     return @value.evaluate()
   end
 end
@@ -93,6 +100,7 @@ class ArithmeticExpr_Node
   end
     
   def evaluate()
+    puts "-----> Entered ArithmeticExpr_Node"
     case @operator
     when '+'
       return @operand1.evaluate() + @operand2.evaluate()
@@ -110,6 +118,8 @@ end
 
 # class Op_Relational_Node
 class PredicatExpr_Node
+  attr_accessor :operator, :value1, :value2
+  
   def initialize(_operator, _value1, _value2)
     @operator = _operator
     @value1 = _value1
@@ -117,6 +127,7 @@ class PredicatExpr_Node
   end
 
   def evaluate()
+    puts "-----> Entered PredicatExpr_Node"
     case @operator
     when '<'
       return @value1.evaluate() < @value2.evaluate()
@@ -143,7 +154,7 @@ class Loop_Node
   end
 
   def evaluate()
-    
+    puts "-----> Entered Loop_Node"
   end
 end
 
@@ -154,6 +165,7 @@ class Boolean_Node
   end
 
   def evaluate()
+    puts "-----> Entered Boolean_Node"
     case @value
     when 'yes'
       return true
@@ -172,6 +184,28 @@ class AssignValue_Node
   end
 
   def evaluate()
+    puts "-----> Entered AssignValue_Node"
+    # if not @@variableHash.include? (@var_name.value)
     @@variableHash[@var_name.value] = @var_value.evaluate()
+    # else
+    #   puts "A variable called #{@var_name.value} already exists."
+    # end
+  end
+end
+
+class FunctionDec_Node
+  attr_accessor :statement_list, :identifier, :parameter_list
+
+  def initialize(_statement_list, _identifier, _parameter_list)
+    @statement_list = _statement_list
+    @identifier = _identifier
+    @parameter_list = _parameter_list
+  end
+
+  def evaluate()
+    puts "-----> Entered FunctionDec_Node"
+
+    puts identifier.value
+#    if not @@functionHash.include? (identifier.value)
   end
 end
