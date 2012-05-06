@@ -12,17 +12,6 @@ def hashChange(var_name, hash_name, new_value)
   hash_name[var_name] = new_value
 end
 
-class If_Stmt
-  def initialize(_expr, _body)
-    @expr = _expr
-    @body = _body
-  end
-
-  def evaluate()
-    puts "-----> Entered If_Node"
-  end
-end
-
 class Float_Node
   def initialize(_value)
     @value = _value
@@ -211,5 +200,24 @@ class FunctionDec_Node
   def evaluate()
     puts "-----> Entered FunctionDec_Node"
 #    if not @@functionHash.include? (identifier.value)
+  end
+end
+
+class If_Node
+  attr_accessor :if_body, :expressions
+
+  def initialize(_if_body, _expressions)
+    @if_body = _if_body
+    @expressions = _expressions
+  end
+
+  def evaluate()
+    puts "-----> Entered If_Node"
+    if @expressions.evaluate() then
+      @if_body.each do
+        |a|
+        puts a.evaluate()
+      end
+    end
   end
 end

@@ -8,36 +8,43 @@ class FlipFlop
   def initialize
     @parser = Parser.new('Flip/Flop') do
 
-      token(/\s/)
+      token(/^(\s)/)
+      token(/^(\+|\-|\*|\/|\%|\=|\!|\&|\<|\>|\<=|\>=|\==|\!=|\(|\))/) { |m| m } # Operators etc.
+      token(/^(scream|boj|job|spit|yes|no|fi|if|esle|else|fi esle|else if)/) { |m| m }
       # token(/-(\d+[.]\d+)/) {|m| Float_Node.new(m.to_f) } #<-- negativa floattal matchas
       # token(/\d+[.]\d+/) {|m| Float_Node.new(m.to_f) } #<-- positiva floattal matchas
-      token(/-(\d+[.]\d+)/) {|m| m.to_f } #<-- negativa floattal matchas
-      token(/\d+[.]\d+/) {|m| m.to_f } #<-- positiva floattal matchas
-      token(/\d+/) { |m| m.to_i } # Single digit
-      token(/(\+|\-|\*|\/|\%|\=|\!|\&|\<|\>|\<=|\>=|\==|\!=|\(|\))/) { |m| m } # Operators etc.
-      token(/'[^\']*'/) { |m| m } # String with '
-      token(/"[^\"]*"/) { |m| m } # String with "
-      token(/\A[^\'\"][a-zA-Z0-9_]+[a-zA-Z0-9_]*/) { |m| m } # Variables
-      
-      token(/scream|boj|job|spit|yes|no/) { |m| m }
-      
-      token(/./) { |m| m }
+      token(/^(-(\d+[.]\d+))/) {|m| m.to_f } #<-- negativa floattal matchas
+      token(/^(\d+[.]\d+)/) {|m| m.to_f } #<-- positiva floattal matchas
+      token(/^(\d+)/) { |m| m.to_i } # Single digit
+
+      token(/^('[^\']*')/) { |m| m } # String with '
+      token(/^("[^\"]*")/) { |m| m } # String with "
+      token(/^(\A[^\'\"][a-zA-Z0-9_]+[a-zA-Z0-9_]*)/) { |m| m } # Variables
+
+      # token(/./) { |m| m }
 
       ## STATEMENT
       start :statement_list do
-        match(:statement_list, :statement)
-        match(:statement)
+        match(:statement_list, :statement) { |a, b| puts "#{a.class} - #{b.class}"; b }
+        match(:statement) { |a| [a] }
       end
       
       rule :statement do
+        match(:if_statement)
         match(:print_statement)
         match(:assign_statement)
         match(:function_declare)
-        match(:expression)
         match(:return_statement)
-        # match(:if_statement)
+        match(:expression)
         # match(:loop_statement)
         # match(:read_statement)
+      end
+
+      rule :if_statement do
+        match("fi", :statement_list, "if", "(", :statement, ")") {
+          |_, stmt_list, _, _, expressions, _|
+          If_Node.new(stmt_list, expressions)
+        }
       end
       
       rule :print_statement do
@@ -74,8 +81,20 @@ class FlipFlop
         match(:expression, "spit") { |a, b| Return_Node.new(a) }
       end
 
-      # rule :if_statement do
-        
+
+      # rule :if_else_if do
+      #   match("fi esle", :stmt_list, "else if", "(", :expression, ")") {
+      #     |_, stmt_list, _, _, expressions, _|
+      #     IfBody_Node.new(stmt_list, expressions)
+      #   }
+      #   match(:if_else, :if_else) {
+      #     |if_else_stmt1, if_else_stmt2|
+      #     if_else_stmt1 += if_else_stmt2
+      #   }
+      # end
+
+      # rule :if_else do
+      #   match("esle", :stmt_list, "else") { |_, stmt_list, _| IfBody_Node.new(stmt_list) }
       # end
 
       # rule :loop_statement do
@@ -115,15 +134,16 @@ class FlipFlop
       end
 
       rule :atom do
-        match(:identifier)
         match(:integer_expr)
         match(:float_expr)
         match(:string_expr)
         match(:boolean_expr)
+        match(:identifier)
       end
 
       rule :identifier do
-        match(/\A[^\'\"][a-z_]+[a-zA-Z0-9_]*/) { |a| Variable_Node.new(a) }
+        match(/\A[^\'\"][a-z_]+[a-zA-Z0-9_]*/) { |a| puts "Variable: #{a}"; Variable_Node.new(a) }
+        #match(String) { |a| puts "Variable: #{a}"; Variable_Node.new(a) }
       end
 
       rule :integer_expr do
@@ -135,8 +155,8 @@ class FlipFlop
       end
 
       rule :string_expr do
-        match(/'[^\']*'/) { |a| String_Node.new(a) }
-        match(/"[^\"]*"/) { |a| String_Node.new(a) }
+        match(/^('[^\']*')/) { |a| String_Node.new(a) }
+        match(/^("[^\"]*")/) { |a| String_Node.new(a) }
       end
 
       rule :boolean_expr do
@@ -192,6 +212,10 @@ class FlipFlop
     end
   end
 
+  def parse_file(filename)
+    @parser.parse(IO.read(filename))[0].evaluate()
+  end
+
   def log(state = true)
     if state
       @parser.logger.level = Logger::DEBUG
@@ -204,4 +228,9 @@ end
 
 ff = FlipFlop.new
 ff.log(true)
-ff.start_man
+if (ARGV.length > 0) then
+  filename = ARGV[0]
+  ff.parse_file(filename)
+else
+  ff.start_man
+end
