@@ -44,6 +44,15 @@ class FlipFlop
         # match(:read_statement)
       end
 
+      rule :print_statement do
+        match(:identifier, 'scream') { |a, b| Print_Node.new(a) }
+        match(:atom, 'scream') { |a, b| Print_Node.new(a) }
+      end
+
+      rule :assign_statement do
+        match(:expression, '=', :identifier) { |a, b, c| AssignValue_Node.new(c, a) }
+      end
+
       rule :if_statement do
         # If-else stmt
         match('fi', :statement_list, 'if', '(', :expression, ')', 'esle', :statement_list, 'else') {
@@ -80,14 +89,6 @@ class FlipFlop
         # }
       end
 
-      rule :print_statement do
-        match(:identifier, 'scream') { |a, b| Print_Node.new(a) }
-        match(:atom, 'scream') { |a, b| Print_Node.new(a) }
-      end
-
-      rule :assign_statement do
-        match(:expression, '=', :identifier) { |a, b, c| AssignValue_Node.new(c, a) }
-      end
 
       # Does not work!
       rule :function_declare do
@@ -99,13 +100,13 @@ class FlipFlop
 
 
       ## FUNCTION_DECLARE
-      rule :parameter do
-        match(:atom)
-      end
-      
       rule :parameter_list do
         match(:parameter_list, :parameter)
         match(:parameter)
+      end
+
+      rule :parameter do
+        match(:atom)
       end
       ## FUNCTION_DECLARE
 
@@ -114,19 +115,6 @@ class FlipFlop
         match(:expression, "spit") { |a, b| Return_Node.new(a) }
       end
 
-      rule :loop_statement do
-        # For-loop
-        match("pool", :statement_list, "loop", "(", :assign_statement, ';', :or_test, ';', :expression, ")") {
-          |_, statement_list, _, _, assign_statement, _, or_test, _, expression, _|
-          LoopFor_Node.new(statement_list, assign_statement, or_test, expression)
-        }
-
-        # While-loop
-        match("pool", :statement_list, "loop", "(", :expression, ")") {
-          |_, stmt_list, _, _, expressions, _|
-          LoopWhile_Node.new(stmt_list, expressions)
-        }
-      end
 
       # rule :read_statement do
 
@@ -267,16 +255,23 @@ class FlipFlop
       end
       ## EXPRESSIONS
 
+      ## LOOP
+      rule :loop_statement do
+        # For-loop
+        match("pool", :statement_list, "loop", "(", :assign_statement, ';', :or_test, ';', :expression, ")") {
+          |_, statement_list, _, _, assign_statement, _, or_test, _, expression, _|
+          LoopFor_Node.new(statement_list, assign_statement, or_test, expression)
+        }
 
-      ## OPERATOR ARITHMETIC
-      rule :op_arithmetic do
-        match("+")
-        match("-")
-        match("*")
-        match("/")
-        match("%")
+        # While-loop
+        match("pool", :statement_list, "loop", "(", :expression, ")") {
+          |_, stmt_list, _, _, expressions, _|
+          LoopWhile_Node.new(stmt_list, expressions)
+        }
       end
-      ## OPERATOR ARITHMETIC
+      ## LOOP
+
+
       ## OPERATOR RELATIONAL
       rule :op_relational do
         match('<')
