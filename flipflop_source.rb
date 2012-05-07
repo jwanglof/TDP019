@@ -9,44 +9,77 @@ class FlipFlop
     @parser = Parser.new('Flip/Flop') do
 
       token(/^(\s)/)
-      token(/^(\+|\-|\*|\/|\%|\=|\!|\&|\<|\>|\<=|\>=|\==|\!=|\(|\))/) { |m| m } # Operators etc.
-      token(/^(scream|boj|job|spit|yes|no|fi|if|esle|else|fi esle|else if)/) { |m| m }
+
+      token(/^(scream|boj|job|spit|yes|no|fi|if|esle|else|fi esle|else if|esle fi|cluster|cluster size|size)/) { |m| m }
+      token(/^(\++|\+|\-|\*|\/|\%|\=|\!|\&&|\<|\>|\<=|\>=|\==|\!=|\(|\)|\]|\[|\|\||\;|\,)/) { |m| m } # Operators etc.
       # token(/-(\d+[.]\d+)/) {|m| Float_Node.new(m.to_f) } #<-- negativa floattal matchas
       # token(/\d+[.]\d+/) {|m| Float_Node.new(m.to_f) } #<-- positiva floattal matchas
-      token(/^(-(\d+[.]\d+))/) {|m| m.to_f } #<-- negativa floattal matchas
-      token(/^(\d+[.]\d+)/) {|m| m.to_f } #<-- positiva floattal matchas
+      token(/^(-(\d+[.]\d+))/) {|m| m.to_f } # negativa floattal matchas
+      token(/^(\d+[.]\d+)/) {|m| m.to_f } # positiva floattal matchas
       token(/^(\d+)/) { |m| m.to_i } # Single digit
-
       token(/^('[^\']*')/) { |m| m } # String with '
       token(/^("[^\"]*")/) { |m| m } # String with "
       token(/^(\A[^\'\"][a-zA-Z0-9_]+[a-zA-Z0-9_]*)/) { |m| m } # Variables
 
       # token(/./) { |m| m }
 
+      start :program do
+        match(:statement_list) { |a| Program_Node.new(a) }
+      end
+
       ## STATEMENT
-      start :statement_list do
-        match(:statement_list, :statement) { |a, b| puts "#{a.class} - #{b.class}"; b }
+      rule :statement_list do
+        match(:statement_list, :statement) { |a, b| puts "#{a.class} - #{b.class}"; a << b }
         match(:statement) { |a| [a] }
       end
       
       rule :statement do
-        match(:if_statement)
         match(:print_statement)
         match(:assign_statement)
+        match(:if_statement)
         match(:function_declare)
         match(:return_statement)
         match(:expression)
-        # match(:loop_statement)
+        match(:loop_statement)
         # match(:read_statement)
       end
 
       rule :if_statement do
-        match("fi", :statement_list, "if", "(", :statement, ")") {
+        # If-else stmt
+        match('fi', :statement_list, 'if', '(', :expression, ')', 'esle', :statement_list, 'else') {
+          |_, stmt_list1, _, _, expressions, _, _, stmt_list2, _|
+          IfElse_Node.new(stmt_list1, stmt_list2, expressions)
+        }
+
+        # If-if else-else stmt
+        # Doesn't work. Dunno how to fix it. If else SUCKS!
+        # match('fi', :statement_list, 'if', '(', :expression, ')', 'fi esle', :statement_list, 'else if', :expression, 'esle', :statement_list, 'else') {
+        #   |_, stmt_list1, _, _, expressions1, _, _, stmt_list2, _, expressions2, _, stmt_list3, _|
+        #   IfElse_node
+        # }
+        match('fi', :statement_list, 'if', '(', :expression, ')', 'esle', :if_statement) {
+          |_, stmt_list1, _, _, expressions, _, _, stmt_list2, _|
+          IfElse_Node.new(stmt_list1, stmt_list2, expressions)
+        }
+
+        # If stmt
+        match('fi', :statement_list, 'if', '(', :expression, ')') {
           |_, stmt_list, _, _, expressions, _|
           If_Node.new(stmt_list, expressions)
         }
+        # match(:if_only)
+
+        # match('fi', '(', :expression, ')', :statement_list, 'if', :statement_list, 'esle') {
+        #   |_, _, expressions, _, stmt_list1, _, stmt_list2, _|
+        #   IfElse_Node.new(stmt_list1, stmt_list2, expressions)
+        # }
+
+        # match('fi', '(', :expression, ')', :statement_list, 'if', :statement_list, 'esle', :if_statement) {
+        #   |_, _, expressions, _, stmt_list1, _, stmt_list2, _|
+        #   IfElse_Node.new(stmt_list1, stmt_list2, expressions)
+        # }
       end
-      
+
       rule :print_statement do
         match(:identifier, 'scream') { |a, b| Print_Node.new(a) }
         match(:atom, 'scream') { |a, b| Print_Node.new(a) }
@@ -81,69 +114,138 @@ class FlipFlop
         match(:expression, "spit") { |a, b| Return_Node.new(a) }
       end
 
+      rule :loop_statement do
+        # For-loop
+        match("pool", :statement_list, "loop", "(", :assign_statement, ';', :or_test, ';', :expression, ")") {
+          |_, statement_list, _, _, assign_statement, _, or_test, _, expression, _|
+          LoopFor_Node.new(statement_list, assign_statement, or_test, expression)
+        }
 
-      # rule :if_else_if do
-      #   match("fi esle", :stmt_list, "else if", "(", :expression, ")") {
-      #     |_, stmt_list, _, _, expressions, _|
-      #     IfBody_Node.new(stmt_list, expressions)
-      #   }
-      #   match(:if_else, :if_else) {
-      #     |if_else_stmt1, if_else_stmt2|
-      #     if_else_stmt1 += if_else_stmt2
-      #   }
-      # end
-
-      # rule :if_else do
-      #   match("esle", :stmt_list, "else") { |_, stmt_list, _| IfBody_Node.new(stmt_list) }
-      # end
-
-      # rule :loop_statement do
-      #   match("pool", :statement_list, "loop", "(", :assign_statement, :expression_pred, :statement, ")") { |no_use, statement_list, no_use2, no_use3, assign_statement, expression_pred, statement, no_use4| Loop_Node.new(statement_list, expression_pred, assign_statement, statement) }
-      #   match("pool", :statement_list, "loop", "(", :expression_pred, ")") { }        
-      # end
+        # While-loop
+        match("pool", :statement_list, "loop", "(", :expression, ")") {
+          |_, stmt_list, _, _, expressions, _|
+          LoopWhile_Node.new(stmt_list, expressions)
+        }
+      end
 
       # rule :read_statement do
 
-      # end
-
-      # rule :op_assignment do
-      #   match('=')
       # end
       ## STATEMENT
 
 
       ## EXPRESSIONS
       rule :expression do
-        match(:expression_pred)
-        match(:expression_arithmetic)
+        # match(:expression_pred)
+        # match(:expression_arithmetic)
+        match(:add_one)
+        match(:subtract_one)
+        match(:or_test)
         match(:function_call)
+        match(:array)
+        match(:array_index)
+        # match(:array_size)
         match(:atom)
       end
 
-      rule :expression_pred do
-        match(:atom, :op_relational, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
-        match(:atom, :op_logic, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
+      # rule :expression_pred do
+      #   match(:atom, :op_logic, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
+      #   match(:expression_rel)
+      # end
+
+      # rule :expression_arithmetic do
+      #   match(:atom, :op_arithmetic, :expression) { |a, b, c| ArithmeticExpr_Node.new(b, a, c) }
+      # end
+
+      # rule :expression_rel do
+      #   match(:atom, :op_relational, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
+      # end
+
+
+      rule :or_test do
+        match(:and_test)
+        match(:or_test, "||", :and_test) { |a, b, c| Compound_Node.new(b, a, c) }
       end
 
-      rule :expression_arithmetic do
-        match(:atom, :op_arithmetic, :expression) { |a, b, c| ArithmeticExpr_Node.new(b, a, c) }
+      rule :and_test do
+        match(:not_test)
+        match(:and_test, "&&", :not_test) { |a, b, c| Compound_Node.new(b, a, c) }
       end
 
-      rule :function_call do
-        # match(:identifier, "(", :arg_list, ")")
+      rule :not_test do
+        match(:comparison)
+        match("!", :not_test) { |a, b| NotTest_Node.new(b) }
       end
 
+      rule :comparison do
+        match(:expression_a, :op_relational, :expression_a) { |a, b, c| Compound_Node.new(b, a, c) }
+        match(:expression_a) { |a| ArithmeticExpr_Node2.new(a) }
+      end
+
+      rule :expression_a do
+        match(:expression_m)
+        match(:expression_a, '+', :expression_m) { |a, b, c| Compound_Node.new(b, a, c) }
+        match(:expression_a, '-', :expression_m) { |a, b, c| Compound_Node.new(b, a, c) }
+      end
+
+      rule :expression_m do
+        match(:expression_u)
+        match(:expression_m, '*', :expression_u) { |a, b, c| Compound_Node.new(b, a, c) }
+        match(:expression_m, '/', :expression_u) { |a, b, c| Compound_Node.new(b, a, c) }
+        match(:expression_m, '%', :expression_u) { |a, b, c| Compound_Node.new(b, a, c) }
+      end
+
+      rule :expression_u do
+        match(:atom)
+        match('-', :expression_u) { |a, b| b * -1 }
+      end
+      
       rule :atom do
+        match('(', :comparison, ')') { |a, b, c| b }
+        match(:boolean_expr)
         match(:integer_expr)
         match(:float_expr)
         match(:string_expr)
-        match(:boolean_expr)
         match(:identifier)
       end
 
+      rule :function_call do
+
+        # match(:identifier, "(", :arg_list, ")")
+      end
+
+      rule :array do
+        match('cluster', '(', :array_values, ')', '=', :identifier) {
+          |_, _, stmt_list, _, _, identifier|
+          ArrayNew_Node.new(identifier, stmt_list)
+        }
+      end
+
+      rule :array_values do
+        match(:atom) { |a| [a] }
+        match(:array_values, ',', :atom) { |a, b, c| a << c }
+      end
+
+      # rule :array_size do
+      #   match('size cluster', :identifier) { |a, b| ArraySize_Node.new(b) }
+      # end
+
+      rule :array_index do
+        match(:identifier, '[', :integer_expr, ']') { |a, _, b, _| ArrayIndex_Node.new(a, b) }
+      end
+
+      rule :add_one do
+        match(:identifier, "++") { |a, b| AddOne_Node.new(a) }
+      end
+
+      rule :subtract_one do
+        match(:identifier, '--') { |a, b| SubtractOne_Node.new(a) }
+      end
+
+      # Able to declare variables IF they starts with an underscore (_)
       rule :identifier do
-        match(/\A[^\'\"][a-z_]+[a-zA-Z0-9_]*/) { |a| puts "Variable: #{a}"; Variable_Node.new(a) }
-        #match(String) { |a| puts "Variable: #{a}"; Variable_Node.new(a) }
+        match(/\A[^(\'|\"|fi|if|esle|else|loop|pool|\,|cluster|cluster size|size|\[|\])][a-z_]+[a-zA-Z0-9_]*/) { |a| Variable_Node.new(a) }
+        #match(String) { |a| Variable_Node.new(a) }
       end
 
       rule :integer_expr do
@@ -185,13 +287,6 @@ class FlipFlop
         match('!=')
       end
       ## OPERATOR RELATIONAL
-      ## OPERATOR LOGIC
-      rule :op_logic do
-        match('!')
-        match('&')
-        match('|')
-      end
-      ## OPERATOR LOGIC
     end
   end
   
@@ -207,13 +302,14 @@ class FlipFlop
       puts "Hej da"
     else
       result = @parser.parse(user_input)
+
       result.evaluate()
       start_man
     end
   end
 
   def parse_file(filename)
-    @parser.parse(IO.read(filename))[0].evaluate()
+    @parser.parse(IO.read(filename)).evaluate()
   end
 
   def log(state = true)
