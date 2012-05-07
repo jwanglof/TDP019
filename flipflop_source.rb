@@ -8,7 +8,9 @@ class FlipFlop
   def initialize
     @parser = Parser.new('Flip/Flop') do
 
-      token(/^(\s)/)
+      token(/^#(.)*$/) # Enradskommentarer matchas
+      token(/##[\w\W\s]*##/) # Blockkommentarer matchas
+      token(/^(\s)/) # Whitespace matchas
 
       token(/^(scream|boj|job|spit|yes|no|fi|if|esle|else|fi esle|else if|esle fi|cluster|cluster size|size)/) { |m| m }
       token(/^(\++|\+|\-|\*|\/|\%|\=|\!|\&&|\<|\>|\<=|\>=|\==|\!=|\(|\)|\]|\[|\|\||\;|\,)/) { |m| m } # Operators etc.
