@@ -92,6 +92,7 @@ class FlipFlop
       end
 
 
+      ## FUNCTION_DECLARE
       # Does not work!
       rule :function_declare do
         match('boj', :statement_list, 'job', :identifier, '(', :parameter_list, ')') {
@@ -100,8 +101,6 @@ class FlipFlop
         }
       end
 
-
-      ## FUNCTION_DECLARE
       rule :parameter_list do
         match(:parameter_list, :parameter)
         match(:parameter)
@@ -126,8 +125,6 @@ class FlipFlop
 
       ## EXPRESSIONS
       rule :expression do
-        # match(:expression_pred)
-        # match(:expression_arithmetic)
         match(:add_one)
         match(:subtract_one)
         match(:or_test)
@@ -137,19 +134,6 @@ class FlipFlop
         # match(:array_size)
         match(:atom)
       end
-
-      # rule :expression_pred do
-      #   match(:atom, :op_logic, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
-      #   match(:expression_rel)
-      # end
-
-      # rule :expression_arithmetic do
-      #   match(:atom, :op_arithmetic, :expression) { |a, b, c| ArithmeticExpr_Node.new(b, a, c) }
-      # end
-
-      # rule :expression_rel do
-      #   match(:atom, :op_relational, :expression) { |a, b, c| PredicatExpr_Node.new(b, a, c) }
-      # end
 
 
       rule :or_test do

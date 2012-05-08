@@ -137,32 +137,6 @@ class Return_Node
   end
 end
 
-# class Op_Arithmetic_Node
-# class ArithmeticExpr_Node
-#   def initialize(_operator, _operand1, _operand2)
-#     @operator = _operator
-#     @operand1 = _operand1
-#     @operand2 = _operand2
-#   end
-    
-#   def evaluate()
-#     puts "-----> Entered ArithmeticExpr_Node"
-
-#     case @operator
-#     when '+'
-#       return @operand1.evaluate() + @operand2.evaluate()
-#     when '-'
-#       return @operand1.evaluate() - @operand2.evaluate()
-#     when '*'
-#       return @operand1.evaluate() * @operand2.evaluate()
-#     when '/'
-#       return @operand1.evaluate() / @operand2.evaluate()
-#     when '%'
-#       return @operand1.evaluate() % @operand2.evaluate()
-#     end
-#   end
-# end
-
 class ArithmeticExpr_Node2
   def initialize(_value)
     @value = _value
@@ -174,35 +148,6 @@ class ArithmeticExpr_Node2
     return @value.evaluate()
   end
 end
-
-# class Op_Relational_Node
-# class PredicatExpr_Node
-#   attr_accessor :operator, :value1, :value2
-  
-#   def initialize(_operator, _value1, _value2)
-#     @operator = _operator
-#     @value1 = _value1
-#     @value2 = _value2
-#   end
-
-#   def evaluate()
-#     puts "-----> Entered PredicatExpr_Node"
-#     case @operator
-#     when '<'
-#       return @value1.evaluate() < @value2.evaluate()
-#     when '<='
-#       return @value1.evaluate() <= @value2.evaluate()
-#     when '>'
-#       return @value1.evaluate() > @value2.evaluate()
-#     when '>='
-#       return @value1.evaluate() >= @value2.evaluate()
-#     when '=='
-#       return @value1.evaluate() == @value2.evaluate()
-#     when '!='
-#       return @value1.evaluate() != @value2.evaluate()
-#     end
-#   end
-# end
 
 class Compound_Node
   attr_accessor :operator, :value1, :value2
