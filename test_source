@@ -5,3 +5,17 @@
 ##
     Blockkommentar
 ##
+
+"asd" = _pow
+_pow[0] scream
+
+fi (8==3) "Juuuuste" scream 
+esle fi (2>2) "wdwqdw" scream
+esle "Saadar" scream else
+
+0 = _oii
+
+pool
+	_oii++
+	_oii scream
+loop (_oii < 10)

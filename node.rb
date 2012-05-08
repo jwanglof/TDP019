@@ -112,6 +112,33 @@ class Print_Node
   end
 end
 
+class PrintSubscript_Node
+  attr_accessor :name, :subscript
+
+  def initialize(_name, _int)
+    @name = _name
+    @subscript = _int
+  end
+  
+  def evaluate()
+    puts "-----> Entered PrintSubscript_Node"
+
+    if @@arrayHash.include? (@name.value) then
+      _counter = 1
+      @@arrayHash[@name.value].each do
+        |a|
+        if _counter == @subscript.evaluate() then
+          puts a
+        end
+        _counter += 1
+      end
+    elsif @@variableHash.include? (@name.value) then
+      
+      puts @@variableHash[@name.value][@subscript.evaluate()]
+    end
+  end
+end
+
 class Variable_Node
   attr_accessor :value
 
@@ -122,9 +149,16 @@ class Variable_Node
   def evaluate()
     puts "-----> Entered Variable_Node"
 
-    return hashLookup(@value, @@variableHash)
+    if @@variableHash.include? (@value) then
+      return @@variableHash[@value]
+    elsif @@arrayHash.include? (@value) then
+      return @@arrayHash[@value]
+    else
+      return "Nope!"
+    end
   end
 end
+
 
 class Return_Node
   def initialize(_value)
@@ -137,13 +171,13 @@ class Return_Node
   end
 end
 
-class ArithmeticExpr_Node2
+class ArithmeticExpr_Node
   def initialize(_value)
     @value = _value
   end
 
   def evaluate()
-    puts "-----> Entered ArithmeticExpr_Node2"
+    puts "-----> Entered ArithmeticExpr_Node"
 
     return @value.evaluate()
   end
@@ -292,16 +326,20 @@ class IfElse_Node
 
   def evaluate()
     puts "-----> Entered IfElse_Node"    
-    
+
     if @expressions.evaluate() then
       @if_body.each do
         |a|
         a.evaluate()
       end
     else
-      @else_body.each do
-        |b|
-        b.evaluate()
+      if @else_body.class == Array then
+        @else_body.each do
+          |b|
+          b.evaluate()
+        end
+      else
+        @else_body.evaluate()
       end
     end
   end

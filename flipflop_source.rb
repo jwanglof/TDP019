@@ -12,16 +12,16 @@ class FlipFlop
       token(/##[\w\W\s]*##/) # Blockkommentarer matchas
       token(/^(\s)/) # Whitespace matchas
 
-      token(/^(scream|boj|job|spit|yes|no|fi|if|esle|else|fi esle|else if|esle fi|cluster|cluster size|size)/) { |m| m }
-      token(/^(\++|\+|\-|\*|\/|\%|\=|\!|\&&|\<|\>|\<=|\>=|\==|\!=|\(|\)|\]|\[|\|\||\;|\,)/) { |m| m } # Operators etc.
+      token(/^(scream|boj|job|spit|yes|no|fi|esle|else|esle fi|cluster|cluster size|size)/) { |m| m }
+      token(/^(\++|\+|\-|\*|\/|\%|\==|\=|\!|\&&|\<|\>|\<=|\>=|\!=|\(|\)|\]|\[|\|\||\;|\,)/) { |m| m } # Operators etc.
       # token(/-(\d+[.]\d+)/) {|m| Float_Node.new(m.to_f) } #<-- negativa floattal matchas
       # token(/\d+[.]\d+/) {|m| Float_Node.new(m.to_f) } #<-- positiva floattal matchas
       token(/^(-(\d+[.]\d+))/) {|m| m.to_f } # negativa floattal matchas
       token(/^(\d+[.]\d+)/) {|m| m.to_f } # positiva floattal matchas
-      token(/^(\d+)/) { |m| m.to_i } # Single digit
+      token(/^(\d+)/) { |m| m.to_i } # Digits
       token(/^('[^\']*')/) { |m| m } # String with '
       token(/^("[^\"]*")/) { |m| m } # String with "
-      token(/^(\A[^\'\"][a-zA-Z0-9_]+[a-zA-Z0-9_]*)/) { |m| m } # Variables
+      token(/^([^\'\"][a-zA-Z0-9_]+[a-zA-Z0-9_]*)/) { |m| m } # Variables
 
       # token(/./) { |m| m }
 
@@ -39,87 +39,40 @@ class FlipFlop
         match(:print_statement)
         match(:assign_statement)
         match(:if_statement)
-        match(:function_declare)
-        match(:return_statement)
         match(:expression)
         match(:loop_statement)
-        # match(:read_statement)
       end
 
       rule :print_statement do
         match(:identifier, 'scream') { |a, b| Print_Node.new(a) }
-        match(:atom, 'scream') { |a, b| Print_Node.new(a) }
+        match(:expression, 'scream') { |a, b| Print_Node.new(a) }
+        match(:identifier, '[', :integer_expr, ']', 'scream') {
+          |a, _, b, _, _|
+          PrintSubscript_Node.new(a, b)
+        }
       end
 
       rule :assign_statement do
         match(:expression, '=', :identifier) { |a, b, c| AssignValue_Node.new(c, a) }
       end
 
+
       rule :if_statement do
-        # If-else stmt
-        match('fi', :statement_list, 'if', '(', :expression, ')', 'esle', :statement_list, 'else') {
-          |_, stmt_list1, _, _, expressions, _, _, stmt_list2, _|
+        match('fi', '(', :expression, ')', :statement_list, 'esle', :statement_list, 'else') {
+          |_, _, expressions, _, stmt_list1, _, stmt_list2, _|
           IfElse_Node.new(stmt_list1, stmt_list2, expressions)
         }
 
-        # If-if else-else stmt
-        # Doesn't work. Dunno how to fix it. If else SUCKS!
-        # match('fi', :statement_list, 'if', '(', :expression, ')', 'fi esle', :statement_list, 'else if', :expression, 'esle', :statement_list, 'else') {
-        #   |_, stmt_list1, _, _, expressions1, _, _, stmt_list2, _, expressions2, _, stmt_list3, _|
-        #   IfElse_node
-        # }
-        match('fi', :statement_list, 'if', '(', :expression, ')', 'esle', :if_statement) {
-          |_, stmt_list1, _, _, expressions, _, _, stmt_list2, _|
+        match('fi', '(', :expression, ')', :statement_list, 'esle', :if_statement) {
+          |_, _, expressions, _, stmt_list1, _, stmt_list2|
           IfElse_Node.new(stmt_list1, stmt_list2, expressions)
         }
 
-        # If stmt
-        match('fi', :statement_list, 'if', '(', :expression, ')') {
-          |_, stmt_list, _, _, expressions, _|
+        match('fi', '(', :expression, ')', :statement_list) {
+          |_, _, expressions, _, stmt_list|
           If_Node.new(stmt_list, expressions)
         }
-        # match(:if_only)
-
-        # match('fi', '(', :expression, ')', :statement_list, 'if', :statement_list, 'esle') {
-        #   |_, _, expressions, _, stmt_list1, _, stmt_list2, _|
-        #   IfElse_Node.new(stmt_list1, stmt_list2, expressions)
-        # }
-
-        # match('fi', '(', :expression, ')', :statement_list, 'if', :statement_list, 'esle', :if_statement) {
-        #   |_, _, expressions, _, stmt_list1, _, stmt_list2, _|
-        #   IfElse_Node.new(stmt_list1, stmt_list2, expressions)
-        # }
       end
-
-
-      ## FUNCTION_DECLARE
-      # Does not work!
-      rule :function_declare do
-        match('boj', :statement_list, 'job', :identifier, '(', :parameter_list, ')') {
-          |_, statement_list, _, identifier, _, parameter_list, _|
-          FunctionDec_Node.new(statement_list, identifier, parameter_list)
-        }
-      end
-
-      rule :parameter_list do
-        match(:parameter_list, :parameter)
-        match(:parameter)
-      end
-
-      rule :parameter do
-        match(:atom)
-      end
-      ## FUNCTION_DECLARE
-
-
-      rule :return_statement do
-        match(:expression, "spit") { |a, b| Return_Node.new(a) }
-      end
-
-
-      # rule :read_statement do
-
-      # end
       ## STATEMENT
 
 
@@ -128,13 +81,17 @@ class FlipFlop
         match(:add_one)
         match(:subtract_one)
         match(:or_test)
-        match(:function_call)
         match(:array)
-        match(:array_index)
-        # match(:array_size)
         match(:atom)
       end
 
+      rule :add_one do
+        match(:identifier, "++") { |a, b| AddOne_Node.new(a) }
+      end
+
+      rule :subtract_one do
+        match(:identifier, '--') { |a, b| SubtractOne_Node.new(a) }
+      end
 
       rule :or_test do
         match(:and_test)
@@ -153,7 +110,7 @@ class FlipFlop
 
       rule :comparison do
         match(:expression_a, :op_relational, :expression_a) { |a, b, c| Compound_Node.new(b, a, c) }
-        match(:expression_a) { |a| ArithmeticExpr_Node2.new(a) }
+        match(:expression_a) { |a| ArithmeticExpr_Node.new(a) }
       end
 
       rule :expression_a do
@@ -173,6 +130,13 @@ class FlipFlop
         match(:atom)
         match('-', :expression_u) { |a, b| b * -1 }
       end
+
+      rule :array do
+        match('cluster', '(', :array_values, ')', '=', :identifier) {
+          |_, _, stmt_list, _, _, identifier|
+          ArrayNew_Node.new(identifier, stmt_list)
+        }
+      end
       
       rule :atom do
         match('(', :comparison, ')') { |a, b, c| b }
@@ -183,43 +147,9 @@ class FlipFlop
         match(:identifier)
       end
 
-      rule :function_call do
-
-        # match(:identifier, "(", :arg_list, ")")
-      end
-
-      rule :array do
-        match('cluster', '(', :array_values, ')', '=', :identifier) {
-          |_, _, stmt_list, _, _, identifier|
-          ArrayNew_Node.new(identifier, stmt_list)
-        }
-      end
-
-      rule :array_values do
-        match(:atom) { |a| [a] }
-        match(:array_values, ',', :atom) { |a, b, c| a << c }
-      end
-
-      # rule :array_size do
-      #   match('size cluster', :identifier) { |a, b| ArraySize_Node.new(b) }
-      # end
-
-      rule :array_index do
-        match(:identifier, '[', :integer_expr, ']') { |a, _, b, _| ArrayIndex_Node.new(a, b) }
-      end
-
-      rule :add_one do
-        match(:identifier, "++") { |a, b| AddOne_Node.new(a) }
-      end
-
-      rule :subtract_one do
-        match(:identifier, '--') { |a, b| SubtractOne_Node.new(a) }
-      end
-
-      # Able to declare variables IF they starts with an underscore (_)
-      rule :identifier do
-        match(/\A[^(\'|\"|fi|if|esle|else|loop|pool|\,|cluster|cluster size|size|\[|\])][a-z_]+[a-zA-Z0-9_]*/) { |a| Variable_Node.new(a) }
-        #match(String) { |a| Variable_Node.new(a) }
+      rule :boolean_expr do
+        match("yes") { |a| Boolean_Node.new(a) }
+        match("no") { |a| Boolean_Node.new(a) }
       end
 
       rule :integer_expr do
@@ -235,9 +165,10 @@ class FlipFlop
         match(/^("[^\"]*")/) { |a| String_Node.new(a) }
       end
 
-      rule :boolean_expr do
-        match("yes") { |a| Boolean_Node.new(a) }
-        match("no") { |a| Boolean_Node.new(a) }
+      # Able to declare variables IF they starts with an underscore (_)
+      rule :identifier do
+        match(/\A[^(\'|\"|fi|if|esle|else|loop|pool|\,|cluster|cluster size|size|\[|\])][a-z_]+[a-zA-Z0-9_]*/) { |a| puts "==================== Variable-name #{a}";  Variable_Node.new(a) }
+        #match(String) { |a| Variable_Node.new(a) }
       end
       ## EXPRESSIONS
 
@@ -256,7 +187,6 @@ class FlipFlop
         }
       end
       ## LOOP
-
 
       ## OPERATOR RELATIONAL
       rule :op_relational do
