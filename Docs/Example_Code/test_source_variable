@@ -1,7 +1,7 @@
 # Tilldelar ett värde till en variabel
 "ett värde på en variabel" = _variable
 
-# Skriver ut hela variabeln
+# Skriver ut variabelns värde
 _variable scream
 
 # Skriver ut första tecknet i variabeln
