@@ -1,0 +1,5 @@
+#	Skapar en array
+cluster("ett värde", "ett annat värde", 2) = gulligArray
+
+#	Skriver ut värde nummer 2
+gulligArray[2] scream
