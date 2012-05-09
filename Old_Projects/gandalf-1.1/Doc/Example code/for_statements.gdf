@@ -1,0 +1,4 @@
+legolas_kill_count = {1..100}
+
+for (i << legolas_kill_count)
+	print i

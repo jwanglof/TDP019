@@ -1,0 +1,8 @@
+factorial:n
+	if(n <= 1)
+		return 1
+	else
+		a = [self, factorial:n-1]
+		return n * a
+
+[self, factorial:3]

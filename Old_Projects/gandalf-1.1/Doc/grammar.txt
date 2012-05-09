@@ -1,0 +1,52 @@
+###
+# This grammar is based on gandlaf.rb r134
+###
+
+program ::= statement_list
+statement_list ::= statement [statement_list]
+statement ::= (complex_statement | simple_statement + NEWLINE)
+complex_statement ::= (class_def | function_def | while_stmt | if_stmt | for_stmt)
+simple_statement ::= (return_stmt | function_call | print_stmt | assignment_stmt | expr)
+
+## Complex statements
+class_stmt ::= "class" + indentifier + NEWLINE + INDENT + class_body + DEDENT
+function_def ::= (function_part | function_name) + suite
+for_stmt ::= "for" + "(" + identifier + "<<" + expr + ")" + suite
+while_stmt ::= "while" + "(" + expr + ")" + suite
+if_stmt ::= "if" + "(" + expr + ")" + suite + ["else" + (suite | if_stmt)]
+
+## Simple statements
+return_stmt ::= "return" + expr
+function_call ::= "[" + identifier + "," + (function_call_part | function_name) + "]"
+print_stmt ::= "print" + expr
+assignment_stmt ::= identifier + "=" + (expr | function_call)
+expr ::= or_test | function_call
+
+class_body ::= function_def + [class_body]
+function_part ::= function_name + ":" + identifier + ["," + function_part]
+function_call_part ::= function_name + ":" + expr + ["," + function_call_part]
+suite ::= NEWLINE + INDENT + statement_list + DEINDENT
+
+function_name ::= identifier
+logical_operator ::= ("<" | ">" | "=") | ("<" | ">" | "=" | "!") + "="
+or_test ::= and_test | or_test + "||" + and_test
+and_test ::= not_test | :and_test + "&&" + not_test
+not_test ::= comparison | "!" + not_test
+comparison ::= a_expr | a_expr + logical_operator + a_expr
+a_expr ::= m_expr | a_expr + ("+" | "-") + m_expr
+m_expr ::= u_expr | m_expr + ("*" | "/" | "%") + u_expr
+u_expr ::= atom | "-" + u_expr
+atom ::= "(" + comparison + ")" | boolean | number | identifier | "@" + identifier | list | list_accessor
+identifier ::= identifier_chars + [identifier_part]
+identifier_part ::= identifier_chars + [identifier_part] | digit + [identifier_part]
+identifier_chars ::= A..Z | a..z | _
+boolean ::= "true" | "false"
+number ::= float | integer
+string ::= '"' + string_body + '"'
+list ::= "{" + list_body + "}" | "{" + expr + ".." + expr + "}"
+list_body ::= expr + "," + list_body | expr
+list_accessor ::= identifier + "{" + number + "}"
+string_body ::= [^"]
+float ::= integer + "." + integer
+integer ::= digit + [integer]
+digit ::= 0..9

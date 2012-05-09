@@ -1,0 +1,4 @@
+# Detta är ett exempel på en for-loop
+pool
+	_ioo scream
+loop (0 = _ioo; 5 < _ioo; _ioo++)

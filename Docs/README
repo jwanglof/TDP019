@@ -1,0 +1,7 @@
+To run:
+	Start IRB
+	load 'run.rb'
+	Test the language
+
+OR to start with a file:
+	ruby flipflop_source.rb <filename>

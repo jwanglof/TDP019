@@ -1,0 +1,15 @@
+start
+    tal funktion fib(n)
+        om(n<2)
+            returnera n
+        slut
+        lista fibbo = [0,1]
+        tal count = 1
+        medans(count < n)
+            count = count + 1
+            fibbo lägg_till fibbo[-1]+fibbo[-2]
+        slut
+        returnera fibbo[-1]
+    slut
+       skriv fib(10)
+slut

@@ -1,0 +1,11 @@
+# Tilldelar ett värde till en variabel
+"ett värde på en variabel" = _variable
+
+# Skriver ut variabelns värde
+_variable scream
+
+# Skriver ut första tecknet i variabeln
+_variable[1] scream
+
+# Försöker skriva ut ett ogiltigt tecken
+_variable[100] scream

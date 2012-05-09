@@ -1,0 +1,8 @@
+start
+	lista lt = [1,2,99]
+	lista bosse = [1,2,3,4,5,6,"kalle",lt]
+	bosse ta_bort_index 1
+	bosse lägg_till "rofl_cop"
+	bosse ta_bort_värde "rofl_cop"
+	skriv bosse
+slut
