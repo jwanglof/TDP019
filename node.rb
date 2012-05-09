@@ -5,6 +5,8 @@
 @@functionHash = {}
 @@arrayHash = {}
 
+@@logLevel = false
+
 def hashLookup(var_name, hash_name)
   hash_name[var_name]
 end
@@ -22,7 +24,7 @@ class ArrayNew_Node
   end
 
   def evaluate()
-    puts "-----> Entered ArrayNew_Node"
+    puts "-----> Entered ArrayNew_Node" if @@logLevel
 
     r_array = []
     @values.each do
@@ -45,7 +47,7 @@ class ArrayIndex_Node
   end
 
   def evaluate()
-    puts "-----> Entered ArrayIndex_Node"
+    puts "-----> Entered ArrayIndex_Node" if @@logLevel
 
     puts @@arrayHash[@array_name]
   end
@@ -67,7 +69,7 @@ class Float_Node
   end
 
   def evaluate()
-    puts "-----> Entered Float_Node"
+    puts "-----> Entered Float_Node" if @@logLevel
     return @value
   end
 end
@@ -78,7 +80,7 @@ class Integer_Node
   end
 
   def evaluate()
-    puts "-----> Entered Integer_Node"
+    puts "-----> Entered Integer_Node" if @@logLevel
     
     return @value
   end
@@ -90,7 +92,7 @@ class String_Node
   end
   
   def evaluate()
-    puts "-----> Entered String_Node"
+    puts "-----> Entered String_Node" if @@logLevel
 
     return @value
   end
@@ -102,7 +104,7 @@ class Print_Node
   end
 
   def evaluate()
-    puts "-----> Entered Print_Node"
+    puts "-----> Entered Print_Node" if @@logLevel
 
     # @value.each do
     #   |a|
@@ -121,9 +123,11 @@ class PrintSubscript_Node
   end
   
   def evaluate()
-    puts "-----> Entered PrintSubscript_Node"
+    puts "-----> Entered PrintSubscript_Node" if @@logLevel
 
-    if @@arrayHash.include? (@name.value) then
+    if @subscript.evaluate() == 0 then
+      puts "Not a valid value"
+    elsif @@arrayHash.include? (@name.value) then
       _counter = 1
       @@arrayHash[@name.value].each do
         |a|
@@ -147,7 +151,7 @@ class Variable_Node
   end
 
   def evaluate()
-    puts "-----> Entered Variable_Node"
+    puts "-----> Entered Variable_Node" if @@logLevel
 
     if @@variableHash.include? (@value) then
       return @@variableHash[@value]
@@ -159,25 +163,13 @@ class Variable_Node
   end
 end
 
-
-class Return_Node
-  def initialize(_value)
-    @value = _value
-  end
-
-  def evaluate()
-    puts "-----> Entered Return_Node"
-    @value.evaluate()
-  end
-end
-
 class ArithmeticExpr_Node
   def initialize(_value)
     @value = _value
   end
 
   def evaluate()
-    puts "-----> Entered ArithmeticExpr_Node"
+    puts "-----> Entered ArithmeticExpr_Node" if @@logLevel
 
     return @value.evaluate()
   end
@@ -193,7 +185,7 @@ class Compound_Node
   end
 
   def evaluate()
-    puts "-----> Entered Compound_Node"
+    puts "-----> Entered Compound_Node" if @@logLevel
 
     if value1.evaluate().class == String and value2.evaluate().class == String
       instance_eval("'#{value1.evaluate()}' #{operator} '#{value2.evaluate()}'")
@@ -210,7 +202,8 @@ class Boolean_Node
   end
 
   def evaluate()
-    puts "-----> Entered Boolean_Node"
+    puts "-----> Entered Boolean_Node" if @@logLevel
+
     case @value
     when 'yes'
       return true
@@ -229,15 +222,8 @@ class AssignValue_Node
   end
 
   def evaluate()
-    puts "-----> Entered AssignValue_Node"
-    # if not @@variableHash.include? (@var_name.value)
-    # @var_value.each do
-    #   |a|
-    #   @@variableHash[@var_name.value] = a.evaluate()
-    # end
-    # else
-    #   puts "A variable called #{@var_name.value} already exists."
-    # end
+    puts "-----> Entered AssignValue_Node" if @@logLevel
+
     @@variableHash[@var_name.value] = @var_value.evaluate()
   end
 end
@@ -250,7 +236,7 @@ class AddOne_Node
   end
 
   def evaluate()
-    puts "-----> Entered AddOne_Node"
+    puts "-----> Entered AddOne_Node" if @@logLevel
 
     old_value = @@variableHash[@var_name.value].to_i
     new_value = old_value+1
@@ -266,32 +252,11 @@ class SubtractOne_Node
   end
 
   def evaluate()
-    puts "-----> Entered SubtractOne_Node"
+    puts "-----> Entered SubtractOne_Node" if @@logLevel
 
     old_value = @@variableHash[@var_name.value].to_i
     new_value = old_value-1
     @@variableHash[@var_name.value] = new_value
-  end
-end
-
-class FunctionDec_Node
-  attr_accessor :statement_list, :identifier, :parameter_list
-
-  def initialize(_statement_list, _identifier, _parameter_list)
-    @statement_list = _statement_list
-    @identifier = _identifier
-    @parameter_list = _parameter_list
-
-    if not @@functionHash.include? (identifier.value)
-      @@functionHash[identifier.value] = self
-    else
-      puts "A function that's called #{identifier.value} already exists."
-    end
-  end
-
-  def evaluate()
-    puts "-----> Entered FunctionDec_Node"
-#    if not @@functionHash.include? (identifier.value)
   end
 end
 
@@ -304,7 +269,7 @@ class If_Node
   end
 
   def evaluate()
-    puts "-----> Entered If_Node"
+    puts "-----> Entered If_Node" if @@logLevel
 
     if @expressions.evaluate() then
       @if_body.each do
@@ -325,7 +290,7 @@ class IfElse_Node
   end
 
   def evaluate()
-    puts "-----> Entered IfElse_Node"    
+    puts "-----> Entered IfElse_Node" if @@logLevel
 
     if @expressions.evaluate() then
       @if_body.each do
@@ -354,6 +319,8 @@ class LoopWhile_Node
   end
 
   def evaluate()
+    puts "-----> Entered LoopWhile_Node" if @@logLevel
+
     while @expressions.evaluate() do
       @stmt_list.each do
         |a|
@@ -374,7 +341,7 @@ class LoopFor_Node
   end
 
   def evaluate()
-    puts "-----> Entered LoopFor_Node"
+    puts "-----> Entered LoopFor_Node" if @@logLevel
 
     # Add the variable to the variable hash and assign a value
     var_name = @assign_stmt.var_name.value
@@ -399,7 +366,7 @@ class Program_Node
   end
 
   def evaluate()
-    puts "-----> Entered Program_Node"
+    puts "-----> Entered Program_Node" if @@logLevel
 
     @value.each do
       |a|
@@ -414,6 +381,8 @@ class NotTest_Node
   end
 
   def evaluate()
+    puts "-----> Entered NotTest_Node" if @@logLevel    
+
     return (not @value.evaluate())
   end
 end 

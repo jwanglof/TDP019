@@ -9,10 +9,10 @@ class FlipFlop
     @parser = Parser.new('Flip/Flop') do
 
       token(/^#(.)*$/) # Enradskommentarer matchas
-      token(/##[\w\W\s]*##/) # Blockkommentarer matchas
+      token(/^(##[\w\W\s]*##)/) # Blockkommentarer matchas
       token(/^(\s)/) # Whitespace matchas
 
-      token(/^(scream|boj|job|spit|yes|no|fi|esle|else|esle fi|cluster|cluster size|size)/) { |m| m }
+      token(/^(scream|yes|no|fi|esle|else|esle fi|cluster)/) { |m| m }
       token(/^(\++|\+|\-|\*|\/|\%|\==|\=|\!|\&&|\<|\>|\<=|\>=|\!=|\(|\)|\]|\[|\|\||\;|\,)/) { |m| m } # Operators etc.
       # token(/-(\d+[.]\d+)/) {|m| Float_Node.new(m.to_f) } #<-- negativa floattal matchas
       # token(/\d+[.]\d+/) {|m| Float_Node.new(m.to_f) } #<-- positiva floattal matchas
@@ -31,7 +31,7 @@ class FlipFlop
 
       ## STATEMENT
       rule :statement_list do
-        match(:statement_list, :statement) { |a, b| puts "#{a.class} - #{b.class}"; a << b }
+        match(:statement_list, :statement) { |a, b| a << b }
         match(:statement) { |a| [a] }
       end
       
@@ -137,6 +137,11 @@ class FlipFlop
           ArrayNew_Node.new(identifier, stmt_list)
         }
       end
+
+      rule :array_values do
+        match(:atom) { |a| [a] }
+        match(:array_values, ',', :atom) { |a, b, c| a << c }
+      end
       
       rule :atom do
         match('(', :comparison, ')') { |a, b, c| b }
@@ -167,8 +172,7 @@ class FlipFlop
 
       # Able to declare variables IF they starts with an underscore (_)
       rule :identifier do
-        match(/\A[^(\'|\"|fi|if|esle|else|loop|pool|\,|cluster|cluster size|size|\[|\])][a-z_]+[a-zA-Z0-9_]*/) { |a| puts "==================== Variable-name #{a}";  Variable_Node.new(a) }
-        #match(String) { |a| Variable_Node.new(a) }
+        match(/\A[^(\'|\"|fi|if|esle|else|loop|pool|\,|cluster|cluster size|size|\[|\])][a-z_]+[a-zA-Z0-9_]*/) { |a| Variable_Node.new(a) }
       end
       ## EXPRESSIONS
 
@@ -234,7 +238,8 @@ class FlipFlop
 end
 
 ff = FlipFlop.new
-ff.log(true)
+ff.log(false)
+
 if (ARGV.length > 0) then
   filename = ARGV[0]
   ff.parse_file(filename)
