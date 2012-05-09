@@ -1,0 +1,6 @@
+# Detta är ett exempel på en while-loop
+0 = _oii
+pool
+	_oii++
+	_oii scream
+loop (_oii < 10)
