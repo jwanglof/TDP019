@@ -1,9 +1,0 @@
-# Detta är ett exempel på en if-sats
-
-fi (8 == 3)
-	"8 är lika med 3" scream 
-esle fi (2>2)
-	"2 är större än 2" scream
-esle 
-	"Inga utav de ovanstående uttrycken är sanna" scream
-else
