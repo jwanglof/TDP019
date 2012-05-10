@@ -214,7 +214,7 @@ class FlipFlop
     user_input = gets
 
     if done(user_input) then
-      puts "Hej da"
+      puts "flip/flop says BYE BYE"
     else
       result = @parser.parse(user_input)
 
