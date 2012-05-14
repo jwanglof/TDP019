@@ -1,19 +1,10 @@
 #!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
 
-@@variableHash = {}
-@@functionHash = {}
-@@arrayHash = {}
+@@variableHash = {} #Contains all declared variables
+@@arrayHash = {} #Contains all arrays
 
-@@logLevel = false
-
-def hashLookup(var_name, hash_name)
-  hash_name[var_name]
-end
-
-def hashChange(var_name, hash_name, new_value)
-  hash_name[var_name] = new_value
-end
+@@logLevel = true #Set to true to see the 'Entered node'-notifications
 
 class ArrayNew_Node
   attr_accessor :array_name, :values
@@ -28,15 +19,10 @@ class ArrayNew_Node
 
     r_array = []
     @values.each do
-      |g|
-      r_array << g.evaluate()
-     @@arrayHash[@array_name.value] = r_array
+      |array_values|
+      r_array << array_values.evaluate()
+      @@arrayHash[@array_name.value] = r_array
     end
-    # @array_name.each do
-    #   if not @@arrayHash.include? (array_name.value)
-    #     puts array_name.value
-    #   end
-    # end
   end
 end
 
@@ -106,10 +92,6 @@ class Print_Node
   def evaluate()
     puts "-----> Entered Print_Node" if @@logLevel
 
-    # @value.each do
-    #   |a|
-    #   puts a.evaluate()
-    # end
     puts @value.evaluate()
   end
 end
@@ -128,16 +110,8 @@ class PrintSubscript_Node
     if @subscript.evaluate() == 0 then
       puts "Not a valid value"
     elsif @@arrayHash.include? (@name.value) then
-      _counter = 1
-      @@arrayHash[@name.value].each do
-        |a|
-        if _counter == @subscript.evaluate() then
-          puts a
-        end
-        _counter += 1
-      end
+      puts @@arrayHash[@name.value][@subscript.evaluate()-1]
     elsif @@variableHash.include? (@name.value) then
-      
       puts @@variableHash[@name.value][@subscript.evaluate()]
     end
   end
@@ -273,8 +247,8 @@ class If_Node
 
     if @expressions.evaluate() then
       @if_body.each do
-        |a|
-        a.evaluate()
+        |if_stmt|
+        if_stmt.evaluate()
       end
     end
   end
@@ -294,14 +268,14 @@ class IfElse_Node
 
     if @expressions.evaluate() then
       @if_body.each do
-        |a|
-        a.evaluate()
+        |if_stmt|
+        if_stmt.evaluate()
       end
     else
       if @else_body.class == Array then
         @else_body.each do
-          |b|
-          b.evaluate()
+          |else_stmt|
+          else_stmt.evaluate()
         end
       else
         @else_body.evaluate()
@@ -323,8 +297,8 @@ class LoopWhile_Node
 
     while @expressions.evaluate() do
       @stmt_list.each do
-        |a|
-        a.evaluate()
+        |stmt|
+        stmt.evaluate()
       end
     end
   end
@@ -353,8 +327,8 @@ class LoopFor_Node
       @@variableHash[var_name] = @@variableHash[var_name]+1
 
       @stmt_list.each do
-        |a|
-        a.evaluate()
+        |stmt|
+        stmt.evaluate()
       end
     end
   end
@@ -369,8 +343,8 @@ class Program_Node
     puts "-----> Entered Program_Node" if @@logLevel
 
     @value.each do
-      |a|
-      a.evaluate()
+      |prog|
+      prog.evaluate()
     end
   end
 end
