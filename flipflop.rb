@@ -165,7 +165,7 @@ class FlipFlop
       end
 
       rule :identifier do
-        match(/[^(\'|\"|fi|if|esle|else|loop|pool|\,|cluster|cluster size|size|\[|\])][a-z_]+[a-zA-Z0-9_]*/) {
+        match(/[^(\'|\"|fi|if|esle|else|loop|pool|\,|cluster\[|\])][a-z_]+[a-zA-Z0-9_]*/) {
           |var|
           Variable_Node.new(var)
         }
