@@ -8,17 +8,17 @@ class FlipFlop
   def initialize
     @parser = Parser.new('Flip/Flop') do
 
-      token(/^#(.)*$/) # Enradskommentarer matchas
-      token(/^(##[\w\W\s]*##)/) # Blockkommentarer matchas
-      token(/^(\s)/) # Whitespace matchas
+      token(/^#(.)*$/) # One-row comments
+      token(/^(##[\w\W\s]*##)/) # Multi-rows comments
+      token(/^(\s)/) # White spaces
 
-      token(/^(scream|yes|no|fi|esle|else|esle fi|cluster)/) { |m| m }
+      token(/^(scream|yes|no|fi|esle|else|esle fi|cluster)/) { |m| m } # Specific syntax for the language
       token(/^(\++|\+|\-|\*|\/|\%|\!=|\==|\=|\!|\&&|\<|\>|\<=|\>=|\(|\)|\]|\[|\|\||\;|\,)/) { |m| m } # Operators etc.
-      token(/^(-(\d+[.]\d+))/) {|m| m.to_f } # negativa floattal matchas
-      token(/^(\d+[.]\d+)/) {|m| m.to_f } # positiva floattal matchas
+      token(/^(-(\d+[.]\d+))/) {|m| m.to_f } # Negative floats
+      token(/^(\d+[.]\d+)/) {|m| m.to_f } # Positive floats
       token(/^(\d+)/) { |m| m.to_i } # Digits
-      token(/^('[^\']*')/) { |m| m } # String with '
-      token(/^("[^\"]*")/) { |m| m } # String with "
+      token(/^('[^\']*')/) { |m| m } # Strings that starts with '
+      token(/^("[^\"]*")/) { |m| m } # Strings that starts with "
       token(/^([^\'\"][a-zA-Z0-9_]+[a-zA-Z0-9_]*)/) { |m| m } # Variables
 
       start :program do
@@ -39,6 +39,8 @@ class FlipFlop
         match(:loop_statement)
       end
 
+      # The first print-statement will print an expression
+      # The second print-statement will subscript a variable or an array and print the value
       rule :print_statement do
         match(:expression, 'scream') { |expr, _| Print_Node.new(expr) }
         match(:identifier, '[', :integer_value, ']', 'scream') {
@@ -47,21 +49,28 @@ class FlipFlop
         }
       end
 
+      # Assign an expression to a variable
       rule :assign_statement do
         match(:expression, '=', :identifier) { |expr, _, ident| AssignValue_Node.new(ident, expr) }
       end
 
+      # The first if-statement is an if with an else
+      # The second statement is an if with a number of if-else-statements
+      # The third one is just an if
       rule :if_statement do
+        # If-else
         match('fi', '(', :expression, ')', :statement_list, 'esle', :statement_list, 'else') {
           |_, _, expressions, _, stmt_list1, _, stmt_list2, _|
           IfElse_Node.new(stmt_list1, stmt_list2, expressions)
         }
 
+        # If-elseif
         match('fi', '(', :expression, ')', :statement_list, 'esle', :if_statement) {
           |_, _, expressions, _, stmt_list1, _, stmt_list2|
           IfElse_Node.new(stmt_list1, stmt_list2, expressions)
         }
 
+        # If
         match('fi', '(', :expression, ')', :statement_list) {
           |_, _, expressions, _, stmt_list|
           If_Node.new(stmt_list, expressions)
@@ -164,6 +173,9 @@ class FlipFlop
         match(/^("[^\"]*")/) { |string_value| String_Node.new(string_value) }
       end
 
+      # Variable match
+      # The reg-exp is pretty ugly but for some reason we need to have it like this or
+      #  the parser won't recognize when we declare our variables
       rule :identifier do
         match(/[^(\'|\"|fi|if|esle|else|loop|pool|\,|cluster\[|\])][a-z_]+[a-zA-Z0-9_]*/) {
           |var|
@@ -173,6 +185,9 @@ class FlipFlop
       ## !EXPRESSIONS
 
       ## LOOP
+
+      # The first statement is for a for-loop.
+      # The second is for a while-loop.
       rule :loop_statement do
         # For-loop
         match("pool", :statement_list, "loop", "(", :assign_statement, ';', :or_test, ';', :expression, ")") {
