@@ -1,8 +1,0 @@
-gandalf_is_late = false
-
-if (gandalf_is_late == true)
-	print "A wizard is never late, Frodo Baggins."
-elseif (gandalf_is_late == false)
-	print "Nor is he early"
-else
-	print "He arrives precisely when he means to."

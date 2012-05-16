@@ -1,4 +1,0 @@
-i = 10
-while (i > 0)
-	print "They taking the hobbits to Isengard!"
-	i = i - 1

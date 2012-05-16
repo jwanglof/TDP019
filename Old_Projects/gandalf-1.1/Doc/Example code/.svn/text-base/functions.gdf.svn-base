@@ -1,4 +1,0 @@
-calc_volume_for_cube_with_height:height, width:width, depth:depth
-	return height*width*depth
-
-[self, calc_volume_for_cube_with_height:10, width:15, depth:20]
