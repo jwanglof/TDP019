@@ -1,10 +1,53 @@
 #!/usr/bin/env ruby
 # -*- coding: utf-8 -*-
 
-@@variableHash = {} #Contains all declared variables
-@@arrayHash = {} #Contains all arrays
+@@variables =[{}] # All declared variables. Each index is a separate scope
+@@functions = {} # Function names, their nodes and their parameters
+@@scope = 0 # Current scope level (index used in @@variables)
 
-@@logLevel = true #Set to true to see the 'Entered node'-notifications
+@@ffHelper = true #Set to true to see parse flow
+
+# SCOPE HANDLING ------------------------------->
+
+def open_scope
+    @@scope += 1
+    @@variables.push({})
+    ffMessenger("Opened a scope, now at level #{@@scope}") if @@ffHelper
+end
+
+def close_scope
+    @@variables.pop
+    @@scope -= 1
+    ffMessenger("Closed a scope, now at level #{@@scope}") if @@ffHelper
+end
+
+def lookup(identifier, hash)
+    ffMessenger("Called lookup function") if @@ffHelper
+    if hash == @@functions
+	hash[identifier]
+
+    elsif hash == @@variables
+	i = @@scope
+	while(i >= 0)
+	    ffMessenger("Searching for \"#{identifier}\" at scope #{i}") if @@ffHelper
+
+	    if @@variables[i].include? (identifier) then
+		return @@variables[i][identifier]
+	    else
+		i -= 1
+	    end
+	end
+	if @@variables[0][identifier] == nil
+	    ffMessenger("There is no variable called #{identifier}.")
+	end
+    end
+end
+
+# END SCOPE HANDLING --------------------------->
+
+def ffMessenger(str)
+    print "flip/flop says: "; puts str
+end
 
 class Program_Node
   def initialize(_value)
@@ -12,7 +55,7 @@ class Program_Node
   end
 
   def evaluate()
-    puts "-----> Entered Program_Node" if @@logLevel
+    ffMessenger("Entered Program_Node") if @@ffHelper
 
     @value.each do
       |prog|
@@ -27,7 +70,7 @@ class Print_Node
   end
 
   def evaluate()
-    puts "-----> Entered Print_Node" if @@logLevel
+    ffMessenger("Entered Print_Node") if @@ffHelper
 
     puts @value.evaluate()
   end
@@ -43,14 +86,29 @@ class PrintSubscript_Node
   end
   
   def evaluate()
-    puts "-----> Entered PrintSubscript_Node" if @@logLevel
+    ffMessenger("Entered PrintSubscript_Node") if @@ffHelper
+
+    value = lookup(@name.value, @@variables)
 
     if @subscript.evaluate() == 0 then
-      puts "Not a valid value"
-    elsif @@arrayHash.include? (@name.value) then
-      puts @@arrayHash[@name.value][@subscript.evaluate()-1]
-    elsif @@variableHash.include? (@name.value) then
-      puts @@variableHash[@name.value][@subscript.evaluate()]
+	ffMessenger("#{@subscript.evaluate()} is not a valid subscript value.")
+    
+    elsif value.class == String || value.class == Array
+	if @subscript.evaluate() <= value.size
+	    puts value[@subscript.evaluate() - 1]
+	else
+	    ffMessenger("#{@subscript.evaluate()} is not a valid subscript value.")
+	end
+	
+    elsif value.class == Fixnum
+	ffMessenger("It is not possible to subscript an Integer.")
+
+    elsif value.class == Float
+	ffMessenger("It is not possible to subscript a Float.")
+
+    else
+	puts "Oh, what do we have here? A #{value.class}. Guess we forgot to implement subscripting for that."
+
     end
   end
 end
@@ -65,9 +123,11 @@ class AssignValue_Node
   end
 
   def evaluate()
-    puts "-----> Entered AssignValue_Node" if @@logLevel
+    ffMessenger("Entered AssignValue_Node") if @@ffHelper
 
-    @@variableHash[@var_name.value] = @var_value.evaluate()
+    @@variables[@@scope][@var_name.value] = @var_value.evaluate()
+
+    ffMessenger("This is the current variable stack: #{@@variables}") if @@ffHelper
   end
 end
 
@@ -82,7 +142,7 @@ class IfElse_Node
   end
 
   def evaluate()
-    puts "-----> Entered IfElse_Node" if @@logLevel
+    ffMessenger("Entered IfElse_Node") if @@ffHelper
 
     if @expressions.evaluate() then
       @if_body.each do
@@ -112,7 +172,7 @@ class If_Node
   end
 
   def evaluate()
-    puts "-----> Entered If_Node" if @@logLevel
+    ffMessenger("Entered If_Node") if @@ffHelper
 
     if @expressions.evaluate() then
       @if_body.each do
@@ -131,11 +191,25 @@ class AddOne_Node
   end
 
   def evaluate()
-    puts "-----> Entered AddOne_Node" if @@logLevel
+    ffMessenger("Entered AddOne_Node") if @@ffHelper
 
-    old_value = @@variableHash[@var_name.value].to_i
-    new_value = old_value+1
-    @@variableHash[@var_name.value] = new_value
+    old_value = lookup(@var_name.value, @@variables).to_i
+    new_value = old_value + 1
+    
+    i = @@scope
+    while(i >= 0)
+	ffMessenger("Looking to add 1 to \"#{var_name.value}\" at scope #{i}") if @@ffHelper
+
+	if @@variables[i].include? (@var_name.value) then
+	    @@variables[i][@var_name.value] = new_value
+	    break
+	else
+	    i -= 1
+	end
+    end
+
+    ffMessenger("Added 1 to #{var_name.value} at scope #{i}") if @@ffHelper
+
   end
 end
 
@@ -147,11 +221,25 @@ class SubtractOne_Node
   end
 
   def evaluate()
-    puts "-----> Entered SubtractOne_Node" if @@logLevel
+    ffMessenger("Entered SubtractOne_Node") if @@ffHelper
 
-    old_value = @@variableHash[@var_name.value].to_i
-    new_value = old_value-1
-    @@variableHash[@var_name.value] = new_value
+    old_value = lookup(@var_name.value, @@variables).to_i
+    new_value = old_value - 1
+
+    i = @@scope
+    while(i >= 0)
+	ffMessenger("Looking to subtract 1 from \"#{var_name.value}\" at scope #{i}") if @@ffHelper
+
+	if @@variables[i].include? (@var_name.value) then
+	    @@variables[i][@var_name.value] = new_value
+	    break
+	else
+	    i -= 1
+	end
+    end
+
+    ffMessenger("Subtracted 1 from #{var_name.value}") if @@ffHelper
+
   end
 end
 
@@ -167,7 +255,7 @@ class Compound_Node
   end
 
   def evaluate()
-    puts "-----> Entered Compound_Node" if @@logLevel
+    ffMessenger("Entered Compound_Node") if @@ffHelper
 
     if value1.evaluate().class == String and value2.evaluate().class == String
       instance_eval("'#{value1.evaluate()}' #{operator} '#{value2.evaluate()}'")
@@ -184,7 +272,7 @@ class NotTest_Node
   end
 
   def evaluate()
-    puts "-----> Entered NotTest_Node" if @@logLevel    
+    ffMessenger("Entered NotTest_Node") if @@ffHelper    
 
     return (not @value.evaluate())
   end
@@ -199,17 +287,20 @@ class ArrayNew_Node
   end
 
   def evaluate()
-    puts "-----> Entered ArrayNew_Node" if @@logLevel
+    ffMessenger("Entered ArrayNew_Node") if @@ffHelper
 
     r_array = []
     @values.each do
       |array_values|
       r_array << array_values.evaluate()
-      @@arrayHash[@array_name.value] = r_array
+      @@variables[@@scope][@array_name.value] = r_array
+
+      puts @@variables if @@ffHelper
     end
   end
 end
 
+=begin NOT IMPLEMENTED YET
 class ArrayIndex_Node
   def initialize(_array_name, _get_index)
     @array_name = _array_name
@@ -217,7 +308,7 @@ class ArrayIndex_Node
   end
 
   def evaluate()
-    puts "-----> Entered ArrayIndex_Node" if @@logLevel
+    ffMessenger("Entered ArrayIndex_Node") if @@ffHelper
 
     puts @@arrayHash[@array_name]
   end
@@ -232,6 +323,7 @@ class ArraySize_Node
     puts @array_name.value
   end
 end
+=end
 
 class ArithmeticExpr_Node
   def initialize(_value)
@@ -239,19 +331,21 @@ class ArithmeticExpr_Node
   end
 
   def evaluate()
-    puts "-----> Entered ArithmeticExpr_Node" if @@logLevel
+    ffMessenger("Entered ArithmeticExpr_Node") if @@ffHelper
 
     return @value.evaluate()
   end
+
 end
 
+# NOT PROPERLY IMPLEMENTED YET. SHOULD RETURN 'yes' AND 'no'.
 class Boolean_Node
   def initialize(_value)
     @value = _value
   end
 
   def evaluate()
-    puts "-----> Entered Boolean_Node" if @@logLevel
+    ffMessenger("Entered Boolean_Node") if @@ffHelper
 
     case @value
     when 'yes'
@@ -268,7 +362,7 @@ class Integer_Node
   end
 
   def evaluate()
-    puts "-----> Entered Integer_Node" if @@logLevel
+    ffMessenger("Entered Integer_Node") if @@ffHelper
     
     return @value
   end
@@ -280,7 +374,7 @@ class Float_Node
   end
 
   def evaluate()
-    puts "-----> Entered Float_Node" if @@logLevel
+    ffMessenger("Entered Float_Node") if @@ffHelper
     return @value
   end
 end
@@ -291,9 +385,9 @@ class String_Node
   end
   
   def evaluate()
-    puts "-----> Entered String_Node" if @@logLevel
-
-    return @value
+    ffMessenger("Entered String_Node") if @@ffHelper
+    
+    return @value.delete "\"\'" # Deletes quotation marks to prevent subscript issues
   end
 end
 
@@ -305,15 +399,10 @@ class Variable_Node
   end
 
   def evaluate()
-    puts "-----> Entered Variable_Node" if @@logLevel
+    ffMessenger("Entered Variable_Node") if @@ffHelper
 
-    if @@variableHash.include? (@value) then
-      return @@variableHash[@value]
-    elsif @@arrayHash.include? (@value) then
-      return @@arrayHash[@value]
-    else
-      return "Nope!"
-    end
+    return lookup(@value, @@variables)
+
   end
 end
 
@@ -328,22 +417,21 @@ class LoopFor_Node
   end
 
   def evaluate()
-    puts "-----> Entered LoopFor_Node" if @@logLevel
+    ffMessenger("Entered LoopFor_Node") if @@ffHelper
 
-    # Add the variable to the variable hash and assign a value
-    var_name = @assign_stmt.var_name.value
-    var_orig_value = assign_stmt.evaluate()
-    @@variableHash[var_name] = var_orig_value
+    open_scope()
+    @assign_stmt.evaluate()
+    ffMessenger("Created and assigned loop variable") if @@ffHelper
 
-    while not @or_test.evaluate() do
-      # Add 1 to the variable
-      @@variableHash[var_name] = @@variableHash[var_name]+1
-
-      @stmt_list.each do
-        |stmt|
-        stmt.evaluate()
-      end
+    while @or_test.evaluate() do
+	ffMessenger("Executing loop statements...") if @@ffHelper
+	@stmt_list.each do
+	    |stmt|
+	    stmt.evaluate()
+	end
+	@expr.evaluate()
     end
+    close_scope()
   end
 end
 
@@ -356,13 +444,96 @@ class LoopWhile_Node
   end
 
   def evaluate()
-    puts "-----> Entered LoopWhile_Node" if @@logLevel
+    ffMessenger("Entered LoopWhile_Node") if @@ffHelper
 
+    open_scope()
     while @expressions.evaluate() do
       @stmt_list.each do
         |stmt|
         stmt.evaluate()
       end
     end
+    close_scope()
   end
+end
+
+class FunctionDeclare_Node
+    attr_accessor :stmt_list, :identifier, :param_list
+
+    def initialize(_stmt_list, _identifier, _param_list)
+	@stmt_list = _stmt_list
+	@identifier = _identifier
+	@param_list = _param_list
+    end
+
+    def evaluate()
+	ffMessenger("Entered FunctionDeclare_Node") if @@ffHelper
+
+	open_scope()
+
+	@param_list.each do |par| par = 0 end
+
+	@@functions[@identifier.value] = [@stmt_list, @param_list]
+
+	close_scope()	
+    end
+end
+
+class FunctionCall_Node
+    attr_accessor :name, :arg_list
+
+    def initialize(_name, _arg_list)
+	@name = _name
+	@arg_list = _arg_list
+    end
+
+    def evaluate()
+	ffMessenger("Entered FunctionCall_Node") if @@ffHelper
+
+	open_scope()
+
+	ffMessenger("These are the #{@name.value} parameters:") if @@ffHelper
+
+	if @@functions[@name.value][1] != nil then
+	    puts @@functions[@name.value][1]
+	else
+	    ffMessenger("#{@name.value} has no parameters.") if @@ffHelper
+	end
+
+
+=begin
+	# Assign argument values to parameters
+	if @@functions[@name.value][1].size == @arg_list.size then
+	    @@functions[@name.value][1].each do |name|
+		@@variables[@@scope][name.evaluate()] = @arg_list[0].evaluate()
+		@arg_list.delete_at(0)
+	    end
+	elsif @@functions[@name.value][1].size < @arg_list.size then
+	    puts "Too many arguments."
+	else
+	    puts "Too few arguments."
+	end
+=end
+
+
+=begin
+	puts "Number of parameters: ", @@functions[@name.value][1].size
+	puts "Parameter names: "
+	@@functions[@name.value][1].each do |name|
+	    puts name.evaluate()
+	end
+
+	puts "Number of arguments: ", @arg_list.size
+	puts @arg_list[0].evaluate()
+=end
+
+	# Executes the function body
+	stmt_list = @@functions[@name.value][0]
+	stmt_list.each do |stmt|
+	    stmt.evaluate()
+	end
+	ffMessenger("The function body executed ok.") if @@ffHelper
+
+	close_scope()
+    end
 end
