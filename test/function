@@ -1,0 +1,3 @@
+boj par1 scream par2 scream job myFunc(par1, par2)
+
+myFunc("Hello ", "world!")
