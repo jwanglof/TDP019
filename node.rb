@@ -5,7 +5,7 @@
 @@functions = {} # Function names, their nodes and their parameters
 @@scope = 0 # Current scope level (index used in @@variables)
 
-@@ffHelper = true #Set to true to see parse flow
+@@ffHelper = false #Set to true to see parse flow
 
 # SCOPE HANDLING ------------------------------->
 

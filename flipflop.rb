@@ -61,6 +61,17 @@ class FlipFlop
 	    match(:function_declare)
 	end
 
+	## FUNCTION CALL
+	rule :function_call do
+	    match(:identifier, '(', ')') { |name, _, _|
+		FunctionCall_Node.new(name, nil)
+	    }
+	    match(:identifier, '(', :argument_list, ')') { |name, _, arg_list, _|
+		FunctionCall_Node.new(name, arg_list)
+	    }
+	end
+	## !FUNCTION CALL
+
 	# The first print-statement will print an expression
 	# The second print-statement will subscript a variable or an array and print the value
 	rule :print_statement do
@@ -235,7 +246,6 @@ class FlipFlop
 	# Variable match
 	# The reg-exp is pretty ugly but for some reason we need to have it like this or
 	#  the parser won't recognize when we declare our variables
-	#  Also note that this makes it impossible to use one-letter variables
 	rule :identifier do
 	    match(/[^(\'|\"|fi|if|esle|else|loop|pool|boj|job|\(|\)|\,|cluster\[|\])][a-z_]+[a-zA-Z0-9_]*/) { |var|
 		Variable_Node.new(var)
@@ -261,6 +271,17 @@ class FlipFlop
 	    }
 	end
 	## !LOOP
+
+	## FUNCTION DECLARATION
+	rule :function_declare do
+	    match('boj', :statement_list, 'job', :identifier, '(', :parameter_list, ')') { |_, stmt_list, _, name, _, param_list, _|
+		FunctionDeclare_Node.new(stmt_list, name, param_list)
+	    }
+	    match('boj', :statement_list, 'job', :identifier, '(', ')') { |_, stmt_list, _, identifier, _, _|
+		FunctionDeclare_Node.new(stmt_list, identifier, nil)
+	    } 
+	end
+	## !FUNCTION DECLARATION
 	## !STATEMENTS
 
 	## OPERATOR RELATIONAL
@@ -296,28 +317,7 @@ class FlipFlop
 	    match(:expression)
 	end
 
-	## FUNCTION DECLARATION
-	rule :function_declare do
-	    match('boj', :statement_list, 'job', :identifier, '(', :parameter_list, ')') { |_, stmt_list, _, name, _, param_list, _|
-		FunctionDeclare_Node.new(stmt_list, name, param_list)
-	    }
-	    match('boj', :statement_list, 'job', :identifier, '(', ')') { |_, stmt_list, _, identifier, _, _|
-		FunctionDeclare_Node.new(stmt_list, identifier, nil)
-	    } 
-	end
-	## !FUNCTION DECLARATION
-
-	## FUNCTION CALL
-	rule :function_call do
-	    match(:identifier, '(', ')') { |name, _, _|
-		FunctionCall_Node.new(name, nil)
-	    }
-	    match(:identifier, '(', :argument_list, ')') { |name, _, arg_list, _|
-		FunctionCall_Node.new(name, arg_list)
-	    }
-	end
-	## !FUNCTION CALL
-    end
+   end
   
     def done(str)
 	['exit', 'quit', 'q'].include?(str.chomp)
