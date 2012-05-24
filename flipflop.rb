@@ -356,7 +356,7 @@ class FlipFlop
 end
 
 ff = FlipFlop.new
-ff.log(true)
+ff.log(false)
 
 if (ARGV.length > 0) then
     filename = ARGV[0]

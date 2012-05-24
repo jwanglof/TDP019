@@ -21,6 +21,11 @@ def close_scope
     ffMessenger("Closed a scope, now at level #{@@scope}") if @@ffHelper
 end
 
+def add_to_scope(name, value)
+    current_scope = @@variables[@@scope]
+    current_scope[name] = value
+end
+
 def lookup(identifier, hash)
     ffMessenger("Called lookup function") if @@ffHelper
     if hash == @@functions
@@ -469,13 +474,9 @@ class FunctionDeclare_Node
   def evaluate()
     ffMessenger("Entered FunctionDeclare_Node") if @@ffHelper
     
-    # open_scope()
-    
-    # @param_list.each do |par| par = 0 end
-    
-    @@functions[@identifier.value] = [@stmt_list, @param_list]
+    ffMessenger("param_list: #{@param_list.inspect}") if @@ffHelper
 
-    # close_scope()	
+    @@functions[@identifier.value] = [@stmt_list, @param_list]
   end
 end
 
@@ -495,34 +496,21 @@ class FunctionCall_Node
     ffMessenger("These are the #{@name.value} parameters:") if @@ffHelper
     
     if @@functions[@name.value][1] != nil then
-	    puts @@functions[@name.value][1]
+	    ffMessenger("#{@@functions[@name.value][1].inspect}") if @@ffHelper
     else
 	    ffMessenger("#{@name.value} has no parameters.") if @@ffHelper
     end
     
-=begin
-	# Assign argument values to parameters
-	if @@functions[@name.value][1].size == @arg_list.size then
-	    @@functions[@name.value][1].each do |name|
-		@@variables[@@scope][name.evaluate()] = @arg_list[0].evaluate()
-		@arg_list.delete_at(0)
-	    end
-	elsif @@functions[@name.value][1].size < @arg_list.size then
-	    puts "Too many arguments."
-	else
-	    puts "Too few arguments."
-	end
-=end
-
-    puts "Number of parameters: " + @@functions[@name.value][1].size.to_s
-    puts "Parameter names: "
-    @@functions[@name.value][1].each do |name|
-	    puts name.evaluate()
+    params = @@functions[@name.value][1]
+    if params.size != @arg_list.size then
+	ffMessenger("Passed #{@arg_list.size} arguments to #{@name.value}, but #{params.size} are required.")
     end
-    
-    puts "Number of arguments: " + @arg_list.size.to_s
-    @arg_list.each do |arg|
-      puts arg.evaluate()
+
+    # Add arguments to scope
+    params.each_with_index do |param, i|
+	name = param.value
+	arg = @arg_list[i]
+	add_to_scope(name, arg.evaluate)
     end
     
     # Executes the function body
