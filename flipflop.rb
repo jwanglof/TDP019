@@ -314,7 +314,8 @@ class FlipFlop
 	end
 
 	rule :parameter do
-	    match(:expression)
+#	    match(:expression)
+        match(:identifier)
 	end
 
    end

@@ -65,14 +65,14 @@ class Program_Node
 end
 
 class Print_Node
-  def initialize(_value)
-    @value = _value
+  def initialize(_expr)
+    @expr = _expr
   end
 
   def evaluate()
     ffMessenger("Entered Print_Node") if @@ffHelper
 
-    puts @value.evaluate()
+    puts @expr.evaluate()
   end
 end
 
@@ -87,28 +87,28 @@ class PrintSubscript_Node
   
   def evaluate()
     ffMessenger("Entered PrintSubscript_Node") if @@ffHelper
-
+    
     value = lookup(@name.value, @@variables)
 
     if @subscript.evaluate() == 0 then
-	ffMessenger("#{@subscript.evaluate()} is not a valid subscript value.")
+      ffMessenger("#{@subscript.evaluate()} is not a valid subscript value.")
     
     elsif value.class == String || value.class == Array
-	if @subscript.evaluate() <= value.size
-	    puts value[@subscript.evaluate() - 1]
-	else
-	    ffMessenger("#{@subscript.evaluate()} is not a valid subscript value.")
-	end
+      if @subscript.evaluate() <= value.size
+        puts value[@subscript.evaluate() - 1]
+      else
+        ffMessenger("#{@subscript.evaluate()} is not a valid subscript value.")
+      end
 	
     elsif value.class == Fixnum
-	ffMessenger("It is not possible to subscript an Integer.")
+      ffMessenger("It is not possible to subscript an Integer.")
 
     elsif value.class == Float
-	ffMessenger("It is not possible to subscript a Float.")
+      ffMessenger("It is not possible to subscript a Float.")
 
     else
-	puts "Oh, what do we have here? A #{value.class}. Guess we forgot to implement subscripting for that."
-
+      puts "Oh, what do we have here? A #{value.class}. Guess we forgot to implement subscripting for that."
+      
     end
   end
 end
@@ -461,46 +461,45 @@ class FunctionDeclare_Node
     attr_accessor :stmt_list, :identifier, :param_list
 
     def initialize(_stmt_list, _identifier, _param_list)
-	@stmt_list = _stmt_list
-	@identifier = _identifier
-	@param_list = _param_list
+      @stmt_list = _stmt_list
+      @identifier = _identifier
+      @param_list = _param_list
     end
 
-    def evaluate()
-	ffMessenger("Entered FunctionDeclare_Node") if @@ffHelper
+  def evaluate()
+    ffMessenger("Entered FunctionDeclare_Node") if @@ffHelper
+    
+    # open_scope()
+    
+    # @param_list.each do |par| par = 0 end
+    
+    @@functions[@identifier.value] = [@stmt_list, @param_list]
 
-	open_scope()
-
-	@param_list.each do |par| par = 0 end
-
-	@@functions[@identifier.value] = [@stmt_list, @param_list]
-
-	close_scope()	
-    end
+    # close_scope()	
+  end
 end
 
 class FunctionCall_Node
-    attr_accessor :name, :arg_list
-
-    def initialize(_name, _arg_list)
-	@name = _name
-	@arg_list = _arg_list
+  attr_accessor :name, :arg_list
+  
+  def initialize(_name, _arg_list)
+      @name = _name
+      @arg_list = _arg_list
     end
-
-    def evaluate()
-	ffMessenger("Entered FunctionCall_Node") if @@ffHelper
-
-	open_scope()
-
-	ffMessenger("These are the #{@name.value} parameters:") if @@ffHelper
-
-	if @@functions[@name.value][1] != nil then
+  
+  def evaluate()
+    ffMessenger("Entered FunctionCall_Node") if @@ffHelper
+    
+    open_scope()
+    
+    ffMessenger("These are the #{@name.value} parameters:") if @@ffHelper
+    
+    if @@functions[@name.value][1] != nil then
 	    puts @@functions[@name.value][1]
-	else
+    else
 	    ffMessenger("#{@name.value} has no parameters.") if @@ffHelper
-	end
-
-
+    end
+    
 =begin
 	# Assign argument values to parameters
 	if @@functions[@name.value][1].size == @arg_list.size then
@@ -515,25 +514,24 @@ class FunctionCall_Node
 	end
 =end
 
-
-=begin
-	puts "Number of parameters: ", @@functions[@name.value][1].size
-	puts "Parameter names: "
-	@@functions[@name.value][1].each do |name|
+    puts "Number of parameters: " + @@functions[@name.value][1].size.to_s
+    puts "Parameter names: "
+    @@functions[@name.value][1].each do |name|
 	    puts name.evaluate()
-	end
-
-	puts "Number of arguments: ", @arg_list.size
-	puts @arg_list[0].evaluate()
-=end
-
-	# Executes the function body
-	stmt_list = @@functions[@name.value][0]
-	stmt_list.each do |stmt|
-	    stmt.evaluate()
-	end
-	ffMessenger("The function body executed ok.") if @@ffHelper
-
-	close_scope()
     end
+    
+    puts "Number of arguments: " + @arg_list.size.to_s
+    @arg_list.each do |arg|
+      puts arg.evaluate()
+    end
+    
+    # Executes the function body
+    stmt_list = @@functions[@name.value][0]
+    stmt_list.each do |stmt|
+	    stmt.evaluate()
+    end
+    ffMessenger("The function body executed ok.") if @@ffHelper
+    
+    close_scope()
+  end
 end
