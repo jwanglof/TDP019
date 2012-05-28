@@ -55,14 +55,14 @@ def ffMessenger(str)
 end
 
 class Program_Node
-  def initialize(_value)
-    @value = _value
+  def initialize(_stmt_list)
+    @stmt_list = _stmt_list
   end
   
   def evaluate()
     ffMessenger("Entered Program_Node") if @@ffHelper
     
-    @value.each do
+    @stmt_list.each do
       |prog|
       prog.evaluate()
     end
@@ -120,17 +120,17 @@ end
 
 # Assign a value to a variable
 class AssignValue_Node
-  attr_accessor :var_name, :var_value
+  attr_accessor :var_name, :var_expr
 
-  def initialize(_var_name, _var_value)
+  def initialize(_var_name, _var_expr)
     @var_name = _var_name
-    @var_value = _var_value
+    @var_expr = _var_expr
   end
 
   def evaluate()
     ffMessenger("Entered AssignValue_Node") if @@ffHelper
 
-    @@variables[@@scope][@var_name.value] = @var_value.evaluate()
+    @@variables[@@scope][@var_name.value] = @var_expr.evaluate()
 
     ffMessenger("This is the current variable stack: #{@@variables}") if @@ffHelper
   end
@@ -331,28 +331,28 @@ end
 =end
 
 class ArithmeticExpr_Node
-  def initialize(_value)
-    @value = _value
+  def initialize(_expr)
+    @expr = _expr
   end
 
   def evaluate()
     ffMessenger("Entered ArithmeticExpr_Node") if @@ffHelper
     
-    return @value.evaluate()
+    return @expr.evaluate()
   end
 
 end
 
 # NOT PROPERLY IMPLEMENTED YET. SHOULD RETURN 'yes' AND 'no'.
 class Boolean_Node
-  def initialize(_value)
-    @value = _value
+  def initialize(_expr)
+    @expr = _expr
   end
   
   def evaluate()
     ffMessenger("Entered Boolean_Node") if @@ffHelper
     
-    case @value
+    case @expr
     when 'yes'
       return true
     when 'no'
@@ -397,16 +397,16 @@ class String_Node
 end
 
 class Variable_Node
-  attr_accessor :value
+  attr_accessor :var
 
-  def initialize(_value)
-    @value = _value
+  def initialize(_var)
+    @var = _var
   end
   
   def evaluate()
     ffMessenger("Entered Variable_Node") if @@ffHelper
     
-    return lookup(@value, @@variables)
+    return lookup(@var, @@variables)
 
   end
 end
